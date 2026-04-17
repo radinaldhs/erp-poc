@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: 0 0% 100%;
+  --color-surface: 0 0% 98%;
+  --color-border: 220 13% 91%;
+  --color-text: 222 47% 11%;
+  --color-text-muted: 215 16% 47%;
+  --color-primary: 221 83% 53%;
+  --color-primary-foreground: 0 0% 100%;
+  --color-success: 142 71% 45%;
+  --color-warning: 38 92% 50%;
+  --color-danger: 0 84% 60%;
+}
+
+.dark {
+  --color-bg: 222 47% 7%;
+  --color-surface: 217 33% 11%;
+  --color-border: 217 19% 20%;
+  --color-text: 210 40% 98%;
+  --color-text-muted: 215 20% 65%;
+  --color-primary: 217 91% 60%;
+  --color-primary-foreground: 222 47% 11%;
+  --color-success: 142 71% 45%;
+  --color-warning: 38 92% 50%;
+  --color-danger: 0 84% 60%;
+}
+
+html, body, #app {
+  height: 100%;
+}
+
+body {
+  @apply bg-bg text-text font-sans antialiased;
+}
+
+.card {
+  @apply bg-surface border border-border rounded-lg;
+}
+
+.focus-ring:focus {
+  @apply outline-none ring-2 ring-primary/40 ring-offset-0;
+}
+
+.btn-base {
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-ring;
+}
+
+.input-base {
+  @apply w-full rounded-md border border-border bg-bg px-3 py-2 text-sm placeholder:text-text-muted focus-ring;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; color: black !important; }
+}
+
+.scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--color-border)); border-radius: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
