@@ -150,19 +150,6 @@ const groups: NavGroup[] = [
       { to: '/reports', label: 'Reports', icon: FileBarChart },
       { to: '/settings', label: 'Settings', icon: Settings }
     ]
-  },
-  {
-    key: 'proposal',
-    label: 'Proposal',
-    accent: true,
-    items: [
-      { to: '/proposal/company', label: 'Company Profile', icon: Briefcase },
-      { to: '/proposal/portfolio', label: 'Portfolio', icon: Presentation },
-      { to: '/proposal/solution', label: 'Solution Overview', icon: Wrench },
-      { to: '/proposal/cost', label: 'Cost Estimate', icon: DollarSign },
-      { to: '/proposal/timeline', label: 'Timeline', icon: Route },
-      { to: '/proposal/timeline', label: 'Phase Plan', icon: ListChecks }
-    ].filter((_, i) => i < 5)
   }
 ]
 

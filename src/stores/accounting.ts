@@ -23,5 +23,26 @@ export const useAccountingStore = defineStore('accounting', () => {
 
   const netIncome = computed(() => totals.value.revenue - totals.value.expense)
 
-  return { accounts, journals, byId, totalByType, totals, netIncome }
+  const addAccount = (x: Account): void => { accounts.value = [x, ...accounts.value] }
+  const updateAccount = (x: Account): void => { accounts.value = accounts.value.map((i) => (i.id === x.id ? x : i)) }
+  const deleteAccount = (id: string): void => { accounts.value = accounts.value.filter((i) => i.id !== id) }
+
+  const addJournal = (x: JournalEntry): void => { journals.value = [x, ...journals.value] }
+  const updateJournal = (x: JournalEntry): void => { journals.value = journals.value.map((i) => (i.id === x.id ? x : i)) }
+  const deleteJournal = (id: string): void => { journals.value = journals.value.filter((i) => i.id !== id) }
+
+  return {
+    accounts,
+    journals,
+    byId,
+    totalByType,
+    totals,
+    netIncome,
+    addAccount,
+    updateAccount,
+    deleteAccount,
+    addJournal,
+    updateJournal,
+    deleteJournal
+  }
 })

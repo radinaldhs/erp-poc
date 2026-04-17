@@ -25,6 +25,18 @@ export const useInventoryStore = defineStore('inventory', () => {
     return products.value.filter((p) => (stockByProduct.value[p.id] ?? 0) < p.reorderLevel).length
   })
 
+  const addProduct = (x: Product): void => { products.value = [x, ...products.value] }
+  const updateProduct = (x: Product): void => { products.value = products.value.map((i) => (i.id === x.id ? x : i)) }
+  const deleteProduct = (id: string): void => { products.value = products.value.filter((i) => i.id !== id) }
+
+  const addWarehouse = (x: Warehouse): void => { warehouses.value = [x, ...warehouses.value] }
+  const updateWarehouse = (x: Warehouse): void => { warehouses.value = warehouses.value.map((i) => (i.id === x.id ? x : i)) }
+  const deleteWarehouse = (id: string): void => { warehouses.value = warehouses.value.filter((i) => i.id !== id) }
+
+  const addStockMovement = (x: StockMovement): void => { stockMovements.value = [x, ...stockMovements.value] }
+  const updateStockMovement = (x: StockMovement): void => { stockMovements.value = stockMovements.value.map((i) => (i.id === x.id ? x : i)) }
+  const deleteStockMovement = (id: string): void => { stockMovements.value = stockMovements.value.filter((i) => i.id !== id) }
+
   return {
     products,
     warehouses,
@@ -33,6 +45,15 @@ export const useInventoryStore = defineStore('inventory', () => {
     productById,
     warehouseById,
     stockByProduct,
-    lowStockCount
+    lowStockCount,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    addWarehouse,
+    updateWarehouse,
+    deleteWarehouse,
+    addStockMovement,
+    updateStockMovement,
+    deleteStockMovement
   }
 })

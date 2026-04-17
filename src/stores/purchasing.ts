@@ -16,5 +16,35 @@ export const usePurchasingStore = defineStore('purchasing', () => {
   const openBillsCount = computed(() => bills.value.filter((b) => b.status !== 'paid').length)
   const totalPayable = computed(() => bills.value.reduce((sum, b) => sum + b.balance, 0))
 
-  return { vendors, purchaseOrders, bills, vendorById, poById, billById, openBillsCount, totalPayable }
+  const addVendor = (x: Vendor): void => { vendors.value = [x, ...vendors.value] }
+  const updateVendor = (x: Vendor): void => { vendors.value = vendors.value.map((i) => (i.id === x.id ? x : i)) }
+  const deleteVendor = (id: string): void => { vendors.value = vendors.value.filter((i) => i.id !== id) }
+
+  const addPurchaseOrder = (x: PurchaseOrder): void => { purchaseOrders.value = [x, ...purchaseOrders.value] }
+  const updatePurchaseOrder = (x: PurchaseOrder): void => { purchaseOrders.value = purchaseOrders.value.map((i) => (i.id === x.id ? x : i)) }
+  const deletePurchaseOrder = (id: string): void => { purchaseOrders.value = purchaseOrders.value.filter((i) => i.id !== id) }
+
+  const addBill = (x: Bill): void => { bills.value = [x, ...bills.value] }
+  const updateBill = (x: Bill): void => { bills.value = bills.value.map((i) => (i.id === x.id ? x : i)) }
+  const deleteBill = (id: string): void => { bills.value = bills.value.filter((i) => i.id !== id) }
+
+  return {
+    vendors,
+    purchaseOrders,
+    bills,
+    vendorById,
+    poById,
+    billById,
+    openBillsCount,
+    totalPayable,
+    addVendor,
+    updateVendor,
+    deleteVendor,
+    addPurchaseOrder,
+    updatePurchaseOrder,
+    deletePurchaseOrder,
+    addBill,
+    updateBill,
+    deleteBill
+  }
 })

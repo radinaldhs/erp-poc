@@ -1,7 +1,6 @@
 <script setup lang="ts" generic="T extends object">
 import { computed, ref } from 'vue'
-import { ArrowUpDown, Search } from 'lucide-vue-next'
-import BaseInput from './BaseInput.vue'
+import { ArrowUpDown, Search, SlidersHorizontal, Plus, X } from 'lucide-vue-next'
 import BasePagination from './BasePagination.vue'
 import BaseEmptyState from './BaseEmptyState.vue'
 import type { TableColumn } from '@/types'
@@ -15,6 +14,9 @@ interface Props {
   emptyMessage?: string
   rowKey?: keyof T
   clickable?: boolean
+  createLabel?: string
+  filterable?: boolean
+  activeFilterCount?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -22,15 +24,22 @@ const props = withDefaults(defineProps<Props>(), {
   searchable: true,
   pageSize: 10,
   emptyMessage: 'No results to display.',
-  clickable: false
+  clickable: false,
+  filterable: false,
+  activeFilterCount: 0
 })
 
-const emit = defineEmits<{ 'row-click': [row: T] }>()
+const emit = defineEmits<{
+  'row-click': [row: T]
+  create: []
+  'reset-filters': []
+}>()
 
 const search = ref('')
 const page = ref(1)
 const sortKey = ref<string>('')
 const sortDir = ref<'asc' | 'desc'>('asc')
+const filterOpen = ref(false)
 
 function extract(row: T, key: string): unknown {
   const rec = row as Record<string, unknown>
@@ -77,8 +86,8 @@ function toggleSort(col: TableColumn<T>): void {
   }
 }
 
-function onSearchChange(value: string | number): void {
-  search.value = String(value)
+function onSearchInput(e: Event): void {
+  search.value = (e.target as HTMLInputElement).value
   page.value = 1
 }
 
@@ -88,21 +97,60 @@ function formatCell(col: TableColumn<T>, row: T): string {
   if (raw == null) return '-'
   return String(raw)
 }
+
+function openFilter(): void {
+  filterOpen.value = true
+}
+
+function closeFilter(): void {
+  filterOpen.value = false
+}
+
+function resetFilters(): void {
+  emit('reset-filters')
+}
 </script>
 
 <template>
   <div class="card overflow-hidden">
-    <div v-if="searchable || $slots.actions" class="flex items-center justify-between gap-3 px-4 py-3 border-b border-border">
-      <div v-if="searchable" class="relative w-full max-w-sm">
-        <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
-        <BaseInput
-          :model-value="search"
+    <div
+      v-if="searchable || $slots.actions || createLabel || filterable"
+      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-b border-border"
+    >
+      <div v-if="searchable" class="relative w-full sm:max-w-sm">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted pointer-events-none" />
+        <input
+          :value="search"
+          type="text"
           placeholder="Search..."
-          @update:model-value="onSearchChange"
+          class="input-base !pl-9"
+          @input="onSearchInput"
         />
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <slot name="actions" />
+        <button
+          v-if="filterable"
+          type="button"
+          class="btn-base bg-surface text-text border border-border hover:bg-border/50 px-3 py-2 text-sm relative"
+          @click="openFilter"
+        >
+          <SlidersHorizontal class="h-4 w-4" />
+          <span>Filters</span>
+          <span
+            v-if="activeFilterCount > 0"
+            class="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold"
+          >{{ activeFilterCount }}</span>
+        </button>
+        <button
+          v-if="createLabel"
+          type="button"
+          class="btn-base bg-primary text-primary-foreground hover:brightness-110 px-3 py-2 text-sm"
+          @click="emit('create')"
+        >
+          <Plus class="h-4 w-4" />
+          <span>{{ createLabel }}</span>
+        </button>
       </div>
     </div>
 
@@ -169,5 +217,47 @@ function formatCell(col: TableColumn<T>, row: T): string {
       <span>Showing {{ paginated.length }} of {{ sortedRows.length }} records</span>
       <BasePagination v-model:page="page" :total-pages="totalPages" />
     </div>
+
+    <Teleport to="body">
+      <div v-if="filterable && filterOpen" class="fixed inset-0 z-50">
+        <div class="absolute inset-0 bg-black/40" @click="closeFilter" />
+        <aside
+          class="absolute right-0 top-0 bottom-0 w-full sm:w-96 bg-bg border-l border-border shadow-xl flex flex-col"
+        >
+          <div class="flex items-center justify-between px-4 h-14 border-b border-border">
+            <div class="flex items-center gap-2">
+              <SlidersHorizontal class="h-4 w-4 text-text-muted" />
+              <h3 class="text-sm font-semibold">Filters</h3>
+              <span
+                v-if="activeFilterCount > 0"
+                class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold"
+              >{{ activeFilterCount }}</span>
+            </div>
+            <button class="text-text-muted hover:text-text" @click="closeFilter">
+              <X class="h-4 w-4" />
+            </button>
+          </div>
+          <div class="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-4">
+            <slot name="filters" />
+          </div>
+          <div class="px-4 py-3 border-t border-border flex items-center justify-between gap-2">
+            <button
+              type="button"
+              class="btn-base text-text hover:bg-surface px-3 py-2 text-sm"
+              @click="resetFilters"
+            >
+              Reset
+            </button>
+            <button
+              type="button"
+              class="btn-base bg-primary text-primary-foreground hover:brightness-110 px-4 py-2 text-sm"
+              @click="closeFilter"
+            >
+              Apply
+            </button>
+          </div>
+        </aside>
+      </div>
+    </Teleport>
   </div>
 </template>

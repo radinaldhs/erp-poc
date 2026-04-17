@@ -19,15 +19,21 @@ export const useSalesStore = defineStore('sales', () => {
   const openInvoicesCount = computed(() => invoices.value.filter((i) => i.status !== 'paid').length)
   const totalReceivables = computed(() => invoices.value.reduce((sum, i) => sum + (i.balance || 0), 0))
 
-  const addCustomer = (c: Customer): void => {
-    customers.value = [c, ...customers.value]
-  }
-  const updateCustomer = (c: Customer): void => {
-    customers.value = customers.value.map((x) => (x.id === c.id ? c : x))
-  }
-  const deleteCustomer = (id: string): void => {
-    customers.value = customers.value.filter((c) => c.id !== id)
-  }
+  const addCustomer = (c: Customer): void => { customers.value = [c, ...customers.value] }
+  const updateCustomer = (c: Customer): void => { customers.value = customers.value.map((x) => (x.id === c.id ? c : x)) }
+  const deleteCustomer = (id: string): void => { customers.value = customers.value.filter((c) => c.id !== id) }
+
+  const addQuote = (q: Quote): void => { quotes.value = [q, ...quotes.value] }
+  const updateQuote = (q: Quote): void => { quotes.value = quotes.value.map((x) => (x.id === q.id ? q : x)) }
+  const deleteQuote = (id: string): void => { quotes.value = quotes.value.filter((q) => q.id !== id) }
+
+  const addSalesOrder = (s: SalesOrder): void => { salesOrders.value = [s, ...salesOrders.value] }
+  const updateSalesOrder = (s: SalesOrder): void => { salesOrders.value = salesOrders.value.map((x) => (x.id === s.id ? s : x)) }
+  const deleteSalesOrder = (id: string): void => { salesOrders.value = salesOrders.value.filter((s) => s.id !== id) }
+
+  const addInvoice = (i: Invoice): void => { invoices.value = [i, ...invoices.value] }
+  const updateInvoice = (i: Invoice): void => { invoices.value = invoices.value.map((x) => (x.id === i.id ? i : x)) }
+  const deleteInvoice = (id: string): void => { invoices.value = invoices.value.filter((i) => i.id !== id) }
 
   return {
     customers,
@@ -43,6 +49,15 @@ export const useSalesStore = defineStore('sales', () => {
     totalReceivables,
     addCustomer,
     updateCustomer,
-    deleteCustomer
+    deleteCustomer,
+    addQuote,
+    updateQuote,
+    deleteQuote,
+    addSalesOrder,
+    updateSalesOrder,
+    deleteSalesOrder,
+    addInvoice,
+    updateInvoice,
+    deleteInvoice
   }
 })
