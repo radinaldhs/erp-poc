@@ -103,35 +103,49 @@ async function handleFiles(files: File[]): Promise<void> {
   }
 }
 
-function toDateIso(value: unknown): string {
+function toDateIso(value: unknown): string | null {
   if (value instanceof Date) return value.toISOString()
-  if (!value) return new Date().toISOString()
+  if (!value) return null
   const s = String(value)
   const parsed = new Date(s)
   if (!Number.isNaN(parsed.getTime())) return parsed.toISOString()
-  return new Date().toISOString()
+  return null
 }
 
-function confirm(): void {
-  const rows: FieldSalesRow[] = mappedRows.value.map((r) => {
-    const qty = Number(r.quantity) || 0
-    const unit = Number(r.unit_price) || 0
+function commitUpload(): void {
+  const rows: FieldSalesRow[] = []
+  let skipped = 0
+  mappedRows.value.forEach((r) => {
+    const date = toDateIso(r.date)
+    const product = r.product ? String(r.product) : null
+    const customer = r.customer ? String(r.customer) : null
+    const qty = Number(r.quantity)
+    const unit = Number(r.unit_price)
+    if (!date || !product || !customer || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(unit) || unit < 0) {
+      skipped++
+      return
+    }
     const total = Number(r.total) || qty * unit
-    return {
+    rows.push({
       id: uuid(),
-      date: toDateIso(r.date),
+      date,
       salesRep: String(r.sales_rep ?? 'Unassigned'),
       region: String(r.region ?? 'Region A'),
-      customer: String(r.customer ?? 'Customer A'),
-      product: String(r.product ?? 'SKU-001'),
+      customer,
+      product,
       quantity: qty,
       unitPrice: unit,
       total
-    }
+    })
   })
+  if (rows.length === 0) {
+    toast.error('No valid rows', 'Every row was flagged as invalid. Fix the workbook and re-upload.')
+    return
+  }
   field.commitUpload(filename.value, auth.user?.name ?? 'Demo User', rows)
   step.value = 'done'
-  toast.success('Upload committed', `${rows.length} rows merged into sales analytics.`)
+  const msg = skipped > 0 ? `${rows.length} rows merged, ${skipped} skipped.` : `${rows.length} rows merged into sales analytics.`
+  toast.success('Upload committed', msg)
 }
 
 function reset(): void {
@@ -194,7 +208,7 @@ function download(): void {
       <template #header>
         <div class="flex items-center gap-2">
           <BaseButton variant="secondary" size="sm" @click="reset">Cancel</BaseButton>
-          <BaseButton size="sm" @click="confirm">
+          <BaseButton size="sm" @click="commitUpload">
             <Upload class="h-4 w-4" /> Confirm and Merge
           </BaseButton>
         </div>

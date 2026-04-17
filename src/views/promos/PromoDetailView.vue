@@ -50,7 +50,11 @@ async function onApprove(): Promise<void> {
     tone: 'default'
   })
   if (!ok) return
-  promos.approve(promo.value.id, (auth.user?.name ?? 'User'), actingRole.value, commentText.value || undefined)
+  const done = promos.approve(promo.value.id, (auth.user?.name ?? 'User'), actingRole.value, commentText.value || undefined)
+  if (!done) {
+    toast.error('Not permitted', 'Your current role cannot act on this stage.')
+    return
+  }
   commentText.value = ''
   toast.success('Promo approved')
 }
@@ -63,7 +67,11 @@ async function onReject(): Promise<void> {
     tone: 'danger'
   })
   if (!ok) return
-  promos.reject(promo.value.id, (auth.user?.name ?? 'User'), actingRole.value, commentText.value || undefined)
+  const done = promos.reject(promo.value.id, (auth.user?.name ?? 'User'), actingRole.value, commentText.value || undefined)
+  if (!done) {
+    toast.error('Not permitted', 'Your current role cannot act on this stage.')
+    return
+  }
   commentText.value = ''
   toast.success('Promo rejected')
 }
@@ -77,6 +85,10 @@ function onComment(): void {
 
 function downloadPdf(): void {
   if (!promo.value) return
+  if (promo.value.status !== 'Approved') {
+    toast.info('Not yet approved', 'The approval letter is available once the promo reaches Approved status.')
+    return
+  }
   generateApprovalLetter(promo.value)
 }
 
@@ -89,7 +101,7 @@ function printPage(): void {
   <div v-if="!promo">
     <BasePageHeader title="Promo Not Found" subtitle="The requested promo could not be located.">
       <template #actions>
-        <BaseButton variant="secondary" @click="router.push({ name: 'promo-list' })">
+        <BaseButton variant="secondary" @click="router.push({ name: 'promos' })">
           <ArrowLeft class="h-4 w-4 mr-1" /> Back to List
         </BaseButton>
       </template>
@@ -98,13 +110,13 @@ function printPage(): void {
   <div v-else>
     <BasePageHeader :title="promo.promoName" subtitle="Full proposal details, audit log, and approval chain.">
       <template #actions>
-        <BaseButton variant="secondary" @click="router.push({ name: 'promo-list' })">
+        <BaseButton variant="secondary" @click="router.push({ name: 'promos' })">
           <ArrowLeft class="h-4 w-4 mr-1" /> Back
         </BaseButton>
         <BaseButton variant="outline" @click="printPage">
           <Printer class="h-4 w-4 mr-1" /> Print
         </BaseButton>
-        <BaseButton variant="primary" @click="downloadPdf">
+        <BaseButton variant="primary" :disabled="promo.status !== 'Approved'" @click="downloadPdf">
           <FileDown class="h-4 w-4 mr-1" /> Approval Letter
         </BaseButton>
       </template>

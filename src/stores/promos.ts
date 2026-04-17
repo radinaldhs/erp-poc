@@ -75,7 +75,15 @@ export const usePromoStore = defineStore('promos', () => {
     return promo
   }
 
-  const approve = (id: string, actor: string, role: UserRole, comment?: string): void => {
+  const canActOn = (p: Promo, role: UserRole): boolean => {
+    if (role === 'Admin') return true
+    const required = statusRole(p.status)
+    return required !== null && required === role
+  }
+
+  const approve = (id: string, actor: string, role: UserRole, comment?: string): boolean => {
+    const target = byId(id)
+    if (!target || !canActOn(target, role)) return false
     items.value = items.value.map((p) => {
       if (p.id !== id) return p
       const from = p.status
@@ -93,9 +101,12 @@ export const usePromoStore = defineStore('promos', () => {
       }
       return { ...p, status: to, auditLog: [...p.auditLog, log], updatedAt: now }
     })
+    return true
   }
 
-  const reject = (id: string, actor: string, role: UserRole, comment?: string): void => {
+  const reject = (id: string, actor: string, role: UserRole, comment?: string): boolean => {
+    const target = byId(id)
+    if (!target || !canActOn(target, role)) return false
     items.value = items.value.map((p) => {
       if (p.id !== id) return p
       const from = p.status
@@ -112,6 +123,7 @@ export const usePromoStore = defineStore('promos', () => {
       }
       return { ...p, status: 'Rejected' as PromoStatus, auditLog: [...p.auditLog, log], updatedAt: now }
     })
+    return true
   }
 
   const comment = (id: string, actor: string, role: UserRole, text: string): void => {
