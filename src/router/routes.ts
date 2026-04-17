@@ -60,9 +60,8 @@ const proposalChildren: RouteRecordRaw[] = [
 export const routes: RouteRecordRaw[] = [
   {
     path: '/login',
-    name: 'login',
     component: () => import('@/layouts/AuthLayout.vue'),
-    children: [{ path: '', component: () => import('@/views/auth/LoginView.vue') }]
+    children: [{ path: '', name: 'login', component: () => import('@/views/auth/LoginView.vue') }]
   },
   {
     path: '/proposal',

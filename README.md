@@ -101,3 +101,27 @@ src/
 | `npm run build`    | `vue-tsc --noEmit` then `vite build` |
 | `npm run preview`  | Serve the built bundle             |
 | `npm run type-check` | Run the strict type checker only |
+
+## Deployment
+
+The project ships with a `vercel.json` and is ready to deploy to Vercel with zero configuration.
+
+### One-click deploy
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/radinaldhs/erp-poc)
+
+### Manual deploy
+
+```bash
+npm i -g vercel
+vercel                 # link the project on first run
+vercel --prod          # deploy to production
+```
+
+Vercel automatically detects the Vite framework, runs `npm install` + `npm run build`, and serves `dist/`. The included `vercel.json` adds:
+
+- SPA rewrites so every path falls back to `index.html`
+- Immutable caching for hashed assets under `/assets/*`
+- No-cache on `index.html` so new deploys are picked up immediately
+
+No environment variables or backend services are required — the app is fully client-side.
