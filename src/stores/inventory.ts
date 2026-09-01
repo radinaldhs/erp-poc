@@ -21,9 +21,15 @@ export const useInventoryStore = defineStore('inventory', () => {
     return map
   })
 
-  const lowStockCount = computed(() => {
-    return products.value.filter((p) => (stockByProduct.value[p.id] ?? 0) < p.reorderLevel).length
-  })
+  // Single source of truth for "low stock": a product/warehouse line whose available
+  // quantity (on-hand minus reserved) falls below that product's reorder level. Both the
+  // stat cards and the Stock Levels table read this so the numbers never diverge.
+  const isLowStock = (sl: StockLevel): boolean => {
+    const reorderLevel = productById(sl.productId)?.reorderLevel ?? 0
+    return sl.quantity - sl.reservedQuantity < reorderLevel
+  }
+
+  const lowStockCount = computed(() => stockLevels.value.filter(isLowStock).length)
 
   const addProduct = (x: Product): void => { products.value = [x, ...products.value] }
   const updateProduct = (x: Product): void => { products.value = products.value.map((i) => (i.id === x.id ? x : i)) }
@@ -45,6 +51,7 @@ export const useInventoryStore = defineStore('inventory', () => {
     productById,
     warehouseById,
     stockByProduct,
+    isLowStock,
     lowStockCount,
     addProduct,
     updateProduct,

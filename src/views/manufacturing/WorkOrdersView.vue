@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { v4 as uuid } from 'uuid'
+import { Trash2 } from 'lucide-vue-next'
 import BasePageHeader from '@/components/ui/BasePageHeader.vue'
 import BaseTable from '@/components/ui/BaseTable.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
@@ -11,12 +13,15 @@ import EntityFormModal from '@/components/shared/EntityFormModal.vue'
 import { useManufacturingStore } from '@/stores/manufacturing'
 import { useInventoryStore } from '@/stores/inventory'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import { formatDate } from '@/composables/useFormat'
 import type { TableColumn, WorkOrder } from '@/types'
 
 const manufacturing = useManufacturingStore()
 const inventory = useInventoryStore()
+const router = useRouter()
 const toast = useToast()
+const confirmDialog = useConfirm()
 
 const filters = reactive({ status: '', productId: '' })
 
@@ -52,8 +57,29 @@ const columns: TableColumn<WorkOrder & { productName: string; progress: number }
   { key: 'startDate', label: 'Start', formatter: (v) => formatDate(String(v)) },
   { key: 'dueDate', label: 'Due', formatter: (v) => formatDate(String(v)) },
   { key: 'assignee', label: 'Assignee' },
-  { key: 'status', label: 'Status' }
+  { key: 'status', label: 'Status' },
+  { key: 'actions', label: '', align: 'right', width: '60px' }
 ]
+
+function openDetail(row: WorkOrder): void {
+  router.push({ name: 'work-order-detail', params: { id: row.id } })
+}
+
+function canDelete(row: WorkOrder): boolean {
+  return row.status === 'planned' || row.status === 'on_hold'
+}
+
+async function remove(row: WorkOrder): Promise<void> {
+  const ok = await confirmDialog.confirm({
+    title: 'Delete this work order?',
+    message: `${row.number} will be permanently removed.`,
+    confirmText: 'Delete',
+    tone: 'danger'
+  })
+  if (!ok) return
+  manufacturing.deleteWorkOrder(row.id)
+  toast.success('Work order deleted', row.number)
+}
 
 const statusOptions = [
   { value: '', label: 'Any status' },
@@ -117,14 +143,16 @@ function save(): void {
 </script>
 
 <template>
-  <BasePageHeader title="Work Orders" subtitle="Active production runs on the shop floor." phase-tag="Phase 2 — Roadmap" />
+  <BasePageHeader title="Work Orders" subtitle="Active production runs on the shop floor." />
   <BaseTable
     :columns="columns"
     :rows="rows"
     row-key="id"
+    clickable
     create-label="New Work Order"
     filterable
     :active-filter-count="activeFilterCount"
+    @row-click="openDetail"
     @create="openCreate"
     @reset-filters="resetFilters"
   >
@@ -146,6 +174,15 @@ function save(): void {
       </div>
     </template>
     <template #cell-status="{ row }"><StatusPill :status="row.status" /></template>
+    <template #cell-actions="{ row }">
+      <button
+        v-if="canDelete(row)"
+        class="text-text-muted hover:text-danger"
+        @click.stop="remove(row)"
+      >
+        <Trash2 class="h-4 w-4" />
+      </button>
+    </template>
   </BaseTable>
 
   <EntityFormModal

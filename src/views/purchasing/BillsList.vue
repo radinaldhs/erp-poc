@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { v4 as uuid } from 'uuid'
+import { Trash2 } from 'lucide-vue-next'
 import BasePageHeader from '@/components/ui/BasePageHeader.vue'
 import BaseTable from '@/components/ui/BaseTable.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
@@ -10,11 +12,14 @@ import CurrencyDisplay from '@/components/shared/CurrencyDisplay.vue'
 import EntityFormModal from '@/components/shared/EntityFormModal.vue'
 import { usePurchasingStore } from '@/stores/purchasing'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import { formatDate } from '@/composables/useFormat'
 import type { Bill, TableColumn } from '@/types'
 
 const purchasing = usePurchasingStore()
+const router = useRouter()
 const toast = useToast()
+const confirmDialog = useConfirm()
 
 const filters = reactive({ status: '', vendorId: '' })
 
@@ -42,17 +47,39 @@ const columns: TableColumn<Bill>[] = [
   { key: 'dueDate', label: 'Due', formatter: (v) => formatDate(String(v)) },
   { key: 'total', label: 'Total', align: 'right' },
   { key: 'balance', label: 'Balance', align: 'right' },
-  { key: 'status', label: 'Status' }
+  { key: 'status', label: 'Status' },
+  { key: 'actions', label: '', align: 'right', width: '60px' }
 ]
 
 const statusOptions = [
   { value: '', label: 'Any status' },
   { value: 'draft', label: 'Draft' },
   { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
   { value: 'paid', label: 'Paid' },
   { value: 'overdue', label: 'Overdue' },
   { value: 'cancelled', label: 'Cancelled' }
 ]
+
+function openDetail(row: Bill): void {
+  router.push({ name: 'bill-detail', params: { id: row.id } })
+}
+
+function canDelete(row: Bill): boolean {
+  return row.status === 'draft' || row.status === 'cancelled'
+}
+
+async function remove(row: Bill): Promise<void> {
+  const ok = await confirmDialog.confirm({
+    title: 'Delete this bill?',
+    message: `${row.number} will be permanently removed.`,
+    confirmText: 'Delete',
+    tone: 'danger'
+  })
+  if (!ok) return
+  purchasing.deleteBill(row.id)
+  toast.success('Bill deleted', row.number)
+}
 
 const showCreate = ref(false)
 const form = reactive({
@@ -112,14 +139,16 @@ function save(): void {
 </script>
 
 <template>
-  <BasePageHeader title="Bills" subtitle="Vendor invoices awaiting payment." phase-tag="Phase 2 — Roadmap" />
+  <BasePageHeader title="Bills" subtitle="Vendor invoices awaiting payment." />
   <BaseTable
     :columns="columns"
     :rows="rows"
     row-key="id"
+    clickable
     create-label="New Bill"
     filterable
     :active-filter-count="activeFilterCount"
+    @row-click="openDetail"
     @create="openCreate"
     @reset-filters="resetFilters"
   >
@@ -142,6 +171,15 @@ function save(): void {
     </template>
     <template #cell-status="{ row }">
       <StatusPill :status="row.status" />
+    </template>
+    <template #cell-actions="{ row }">
+      <button
+        v-if="canDelete(row)"
+        class="text-text-muted hover:text-danger"
+        @click.stop="remove(row)"
+      >
+        <Trash2 class="h-4 w-4" />
+      </button>
     </template>
   </BaseTable>
 

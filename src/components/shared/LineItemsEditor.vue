@@ -56,27 +56,30 @@ const total = computed(() => subtotal.value + tax.value)
       <tbody>
         <tr v-for="item in items" :key="item.id" class="border-t border-border">
           <td class="px-3 py-2">
+            <span v-if="readonly">{{ item.description || '-' }}</span>
             <input
+              v-else
               :value="item.description"
-              :readonly="readonly"
               class="input-base !py-1 !text-sm"
               @input="mutate(item.id, { description: ($event.target as HTMLInputElement).value })"
             />
           </td>
-          <td class="px-3 py-2">
+          <td class="px-3 py-2 text-right">
+            <span v-if="readonly">{{ item.quantity }}</span>
             <input
+              v-else
               type="number"
               :value="item.quantity"
-              :readonly="readonly"
               class="input-base !py-1 !text-sm text-right"
               @input="mutate(item.id, { quantity: Number(($event.target as HTMLInputElement).value) })"
             />
           </td>
-          <td class="px-3 py-2">
+          <td class="px-3 py-2 text-right">
+            <span v-if="readonly">{{ formatCurrency(item.unitPrice) }}</span>
             <input
+              v-else
               type="number"
               :value="item.unitPrice"
-              :readonly="readonly"
               class="input-base !py-1 !text-sm text-right"
               @input="mutate(item.id, { unitPrice: Number(($event.target as HTMLInputElement).value) })"
             />

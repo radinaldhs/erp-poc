@@ -19,7 +19,7 @@ const lines: LineEstimate[] = [
   { module: 'Promo Workflow', description: 'Tiered approvals, audit log, PDF letters', weeks: 4, rate: baseRate },
   { module: 'Core Sales and CRM', description: 'Customers, quotes, orders, invoices, leads', weeks: 4, rate: baseRate },
   { module: 'Projects Module', description: 'Projects, Kanban tasks, timesheets', weeks: 2, rate: baseRate },
-  { module: 'Phase 2 Scaffold', description: 'Stubbed modules with navigation and seed data', weeks: 1, rate: baseRate },
+  { module: 'Extended Modules', description: 'Purchasing, Inventory, Accounting, HR, Manufacturing, full CRUD and workflows', weeks: 1, rate: baseRate },
   { module: 'UX Polish and QA', description: 'Accessibility pass, cross-browser, release readiness', weeks: 2, rate: baseRate }
 ]
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { v4 as uuid } from 'uuid'
+import { Trash2 } from 'lucide-vue-next'
 import BasePageHeader from '@/components/ui/BasePageHeader.vue'
 import BaseTable from '@/components/ui/BaseTable.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
@@ -10,11 +11,13 @@ import BaseTextarea from '@/components/ui/BaseTextarea.vue'
 import EntityFormModal from '@/components/shared/EntityFormModal.vue'
 import { useInventoryStore } from '@/stores/inventory'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import { formatDate } from '@/composables/useFormat'
 import type { StockMovement, TableColumn } from '@/types'
 
 const inventory = useInventoryStore()
 const toast = useToast()
+const confirmDialog = useConfirm()
 
 const filters = reactive({ type: '', productId: '', warehouseId: '' })
 
@@ -51,7 +54,8 @@ const columns: TableColumn<StockMovement & { productName: string; warehouseName:
   { key: 'productName', label: 'Product' },
   { key: 'warehouseName', label: 'Warehouse' },
   { key: 'type', label: 'Type' },
-  { key: 'quantity', label: 'Qty', align: 'right' }
+  { key: 'quantity', label: 'Qty', align: 'right' },
+  { key: 'actions', label: '', align: 'right', width: '60px' }
 ]
 
 const typeTone = (t: StockMovement['type']): 'success' | 'danger' | 'info' | 'warning' => {
@@ -69,7 +73,8 @@ const typeOptions = [
   { value: 'adjustment', label: 'Adjustment' }
 ]
 
-const showCreate = ref(false)
+const showModal = ref(false)
+const editingId = ref<string | null>(null)
 const form = reactive({
   productId: '',
   warehouseId: '',
@@ -81,6 +86,7 @@ const form = reactive({
 })
 
 function openCreate(): void {
+  editingId.value = null
   form.productId = inventory.products[0]?.id ?? ''
   form.warehouseId = inventory.warehouses[0]?.id ?? ''
   form.type = 'in'
@@ -88,7 +94,19 @@ function openCreate(): void {
   form.reference = ''
   form.date = new Date().toISOString().slice(0, 10)
   form.notes = ''
-  showCreate.value = true
+  showModal.value = true
+}
+
+function openEdit(row: StockMovement): void {
+  editingId.value = row.id
+  form.productId = row.productId
+  form.warehouseId = row.warehouseId
+  form.type = row.type
+  form.quantity = row.quantity
+  form.reference = row.reference
+  form.date = row.date.slice(0, 10)
+  form.notes = row.notes ?? ''
+  showModal.value = true
 }
 
 function save(): void {
@@ -97,32 +115,63 @@ function save(): void {
     return
   }
   const now = new Date().toISOString()
-  inventory.addStockMovement({
-    id: uuid(),
-    productId: form.productId,
-    warehouseId: form.warehouseId,
-    type: form.type,
-    quantity: Number(form.quantity) || 0,
-    reference: form.reference,
-    date: form.date,
-    notes: form.notes,
-    createdAt: now,
-    updatedAt: now
+  if (editingId.value) {
+    const existing = inventory.stockMovements.find((m) => m.id === editingId.value)
+    if (!existing) return
+    inventory.updateStockMovement({
+      ...existing,
+      productId: form.productId,
+      warehouseId: form.warehouseId,
+      type: form.type,
+      quantity: Number(form.quantity) || 0,
+      reference: form.reference,
+      date: form.date,
+      notes: form.notes,
+      updatedAt: now
+    })
+    toast.success('Stock movement updated')
+  } else {
+    inventory.addStockMovement({
+      id: uuid(),
+      productId: form.productId,
+      warehouseId: form.warehouseId,
+      type: form.type,
+      quantity: Number(form.quantity) || 0,
+      reference: form.reference,
+      date: form.date,
+      notes: form.notes,
+      createdAt: now,
+      updatedAt: now
+    })
+    toast.success('Stock movement recorded')
+  }
+  showModal.value = false
+}
+
+async function remove(row: StockMovement): Promise<void> {
+  const ok = await confirmDialog.confirm({
+    title: 'Delete this stock movement?',
+    message: `This movement (${row.reference || row.id}) will be permanently removed.`,
+    confirmText: 'Delete',
+    tone: 'danger'
   })
-  toast.success('Stock movement recorded')
-  showCreate.value = false
+  if (!ok) return
+  inventory.deleteStockMovement(row.id)
+  toast.success('Stock movement deleted')
 }
 </script>
 
 <template>
-  <BasePageHeader title="Stock Movements" subtitle="Historic stock in, out, transfers, and adjustments." phase-tag="Phase 2 — Roadmap" />
+  <BasePageHeader title="Stock Movements" subtitle="Historic stock in, out, transfers, and adjustments." />
   <BaseTable
     :columns="columns"
     :rows="rows"
     row-key="id"
+    clickable
     create-label="New Movement"
     filterable
     :active-filter-count="activeFilterCount"
+    @row-click="openEdit"
     @create="openCreate"
     @reset-filters="resetFilters"
   >
@@ -148,13 +197,18 @@ function save(): void {
     <template #cell-type="{ row }">
       <BaseBadge :tone="typeTone(row.type)" class="capitalize">{{ row.type }}</BaseBadge>
     </template>
+    <template #cell-actions="{ row }">
+      <button class="text-text-muted hover:text-danger" @click.stop="remove(row)">
+        <Trash2 class="h-4 w-4" />
+      </button>
+    </template>
   </BaseTable>
 
   <EntityFormModal
-    :open="showCreate"
-    title="New Stock Movement"
-    save-label="Record Movement"
-    @close="showCreate = false"
+    :open="showModal"
+    :title="editingId ? 'Edit Stock Movement' : 'New Stock Movement'"
+    :save-label="editingId ? 'Save Changes' : 'Record Movement'"
+    @close="showModal = false"
     @submit="save"
   >
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">

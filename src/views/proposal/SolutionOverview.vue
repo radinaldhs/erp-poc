@@ -22,7 +22,7 @@ const pillars = [
   {
     icon: Layers,
     title: 'Modular ERP Surface',
-    body: 'Sales, CRM, and Projects are available today. Purchasing, Inventory, Accounting, HR, and Manufacturing are scoped as a second phase.'
+    body: 'Sales, CRM, Projects, Purchasing, Inventory, Accounting, HR, and Manufacturing are all available today as a single integrated release.'
   },
   {
     icon: ShieldCheck,
@@ -40,7 +40,7 @@ const architecture = [
   { layer: 'Experience', items: 'Vue 3, TypeScript, Tailwind, Chart.js' },
   { layer: 'State', items: 'Pinia, composables, reactive localStorage' },
   { layer: 'Integration', items: 'Excel (SheetJS), PDF (jsPDF), future REST adapters' },
-  { layer: 'Delivery', items: 'Vite build, static hosting, incremental Phase 2 modules' }
+  { layer: 'Delivery', items: 'Vite build, static hosting, single-release deployment' }
 ]
 </script>
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { v4 as uuid } from 'uuid'
+import { Trash2 } from 'lucide-vue-next'
 import BasePageHeader from '@/components/ui/BasePageHeader.vue'
 import BaseTable from '@/components/ui/BaseTable.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
@@ -10,10 +11,12 @@ import CurrencyDisplay from '@/components/shared/CurrencyDisplay.vue'
 import EntityFormModal from '@/components/shared/EntityFormModal.vue'
 import { useAccountingStore } from '@/stores/accounting'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import type { Account, AccountType, TableColumn } from '@/types'
 
 const accounting = useAccountingStore()
 const toast = useToast()
+const confirmDialog = useConfirm()
 
 const filters = reactive({ type: '', active: '' })
 
@@ -40,7 +43,8 @@ const columns: TableColumn<Account>[] = [
   { key: 'name', label: 'Name', sortable: true },
   { key: 'type', label: 'Type' },
   { key: 'balance', label: 'Balance', align: 'right' },
-  { key: 'isActive', label: 'Active' }
+  { key: 'isActive', label: 'Active' },
+  { key: 'actions', label: '', align: 'right', width: '60px' }
 ]
 
 const typeTone = (t: Account['type']): 'primary' | 'warning' | 'info' | 'success' | 'danger' => {
@@ -56,22 +60,37 @@ const typeOptions = [
   { value: 'expense', label: 'Expense' }
 ]
 
-const showCreate = ref(false)
+const showModal = ref(false)
+const editingId = ref<string | null>(null)
+// Opening balances are never user-editable: they'd desync the Assets = Liabilities +
+// Equity identity the seed carefully balances. New accounts always start at 0; existing
+// balances only move through journal entries.
+const editingBalance = ref(0)
 const form = reactive({
   code: '',
   name: '',
   type: 'asset' as AccountType,
-  balance: 0,
   isActive: true
 })
 
 function openCreate(): void {
+  editingId.value = null
+  editingBalance.value = 0
   form.code = `ACC-${String(accounting.accounts.length + 1).padStart(4, '0')}`
   form.name = ''
   form.type = 'asset'
-  form.balance = 0
   form.isActive = true
-  showCreate.value = true
+  showModal.value = true
+}
+
+function openEdit(row: Account): void {
+  editingId.value = row.id
+  editingBalance.value = row.balance
+  form.code = row.code
+  form.name = row.name
+  form.type = row.type
+  form.isActive = row.isActive
+  showModal.value = true
 }
 
 function save(): void {
@@ -80,30 +99,58 @@ function save(): void {
     return
   }
   const now = new Date().toISOString()
-  accounting.addAccount({
-    id: uuid(),
-    code: form.code,
-    name: form.name,
-    type: form.type,
-    balance: Number(form.balance) || 0,
-    isActive: form.isActive,
-    createdAt: now,
-    updatedAt: now
+  if (editingId.value) {
+    const existing = accounting.byId(editingId.value)
+    if (!existing) return
+    accounting.updateAccount({
+      ...existing,
+      code: form.code,
+      name: form.name,
+      type: form.type,
+      isActive: form.isActive,
+      updatedAt: now
+    })
+    toast.success('Account updated', form.name)
+  } else {
+    accounting.addAccount({
+      id: uuid(),
+      code: form.code,
+      name: form.name,
+      type: form.type,
+      balance: 0,
+      isActive: form.isActive,
+      createdAt: now,
+      updatedAt: now
+    })
+    toast.success('Account created', form.name)
+  }
+  showModal.value = false
+}
+
+async function remove(row: Account): Promise<void> {
+  const ok = await confirmDialog.confirm({
+    title: 'Delete this account?',
+    message: `${row.name} will be permanently removed.`,
+    confirmText: 'Delete',
+    tone: 'danger'
   })
-  toast.success('Account created', form.name)
-  showCreate.value = false
+  if (!ok) return
+  accounting.deleteAccount(row.id)
+  toast.success('Account deleted', row.name)
 }
 </script>
 
 <template>
-  <BasePageHeader title="Chart of Accounts" subtitle="Financial categorization used for journal posting." phase-tag="Phase 2 — Roadmap" />
+  <BasePageHeader title="Chart of Accounts" subtitle="Financial categorization used for journal posting." />
   <BaseTable
     :columns="columns"
     :rows="rows"
     row-key="id"
+    clickable
     create-label="New Account"
     filterable
     :active-filter-count="activeFilterCount"
+    @row-click="openEdit"
     @create="openCreate"
     @reset-filters="resetFilters"
   >
@@ -132,20 +179,36 @@ function save(): void {
     <template #cell-isActive="{ row }">
       <BaseBadge :tone="row.isActive ? 'success' : 'neutral'">{{ row.isActive ? 'Active' : 'Inactive' }}</BaseBadge>
     </template>
+    <template #cell-actions="{ row }">
+      <button class="text-text-muted hover:text-danger" @click.stop="remove(row)">
+        <Trash2 class="h-4 w-4" />
+      </button>
+    </template>
   </BaseTable>
 
   <EntityFormModal
-    :open="showCreate"
-    title="New Account"
-    save-label="Create Account"
-    @close="showCreate = false"
+    :open="showModal"
+    :title="editingId ? 'Edit Account' : 'New Account'"
+    :save-label="editingId ? 'Save Changes' : 'Create Account'"
+    @close="showModal = false"
     @submit="save"
   >
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <BaseInput v-model="form.code" label="Code" required />
       <BaseInput v-model="form.name" label="Name" required />
-      <BaseSelect v-model="form.type" label="Type" :options="typeOptions" />
-      <BaseInput v-model.number="form.balance" type="number" label="Opening Balance" />
+      <BaseSelect v-if="!editingId" v-model="form.type" label="Type" :options="typeOptions" />
+      <div v-else>
+        <p class="text-xs font-medium text-text-muted">Type</p>
+        <p class="text-sm font-medium mt-2 capitalize">{{ form.type }}</p>
+        <p class="text-xs text-text-muted mt-1">Reclassifying an account moves through journal entries, not this form.</p>
+      </div>
+      <div v-if="editingId">
+        <p class="text-xs font-medium text-text-muted">Balance</p>
+        <p class="text-sm font-medium mt-2">
+          <CurrencyDisplay :value="editingBalance" />
+        </p>
+        <p class="text-xs text-text-muted mt-1">Balances move through journal entries, not this form.</p>
+      </div>
     </div>
     <label class="flex items-center gap-2 text-sm">
       <input v-model="form.isActive" type="checkbox" class="h-4 w-4" />

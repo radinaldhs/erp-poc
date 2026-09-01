@@ -22,20 +22,30 @@ export function buildBoms(products: Product[], count = 15): Bom[] {
   })
 }
 
+/** Produced quantity must be coherent with status: planned hasn't started, completed hits the target exactly, and in-flight statuses sit partway through. */
+function producedQuantityFor(status: WorkOrder['status'], targetQuantity: number): number {
+  if (status === 'planned') return 0
+  if (status === 'completed') return targetQuantity
+  const pct = nextInt(10, 90) / 100
+  return Math.round(targetQuantity * pct)
+}
+
 export function buildWorkOrders(boms: Bom[], count = 20): WorkOrder[] {
   return Array.from({ length: count }, (_, i) => {
     const bom = pick(boms)
     const createdAt = pastDateISO(60)
+    const targetQuantity = nextInt(50, 500)
+    const status = pick(['planned', 'in_progress', 'completed', 'on_hold'] as const)
     return {
       id: uid('wo_'),
       number: `WO-${pad(i + 1, 5)}`,
       bomId: bom.id,
       productId: bom.productId,
-      targetQuantity: nextInt(50, 500),
-      producedQuantity: nextInt(0, 500),
+      targetQuantity,
+      producedQuantity: producedQuantityFor(status, targetQuantity),
       startDate: pastDateISO(30),
       dueDate: futureDateISO(30),
-      status: pick(['planned', 'in_progress', 'completed', 'on_hold'] as const),
+      status,
       assignee: pick(['Parker Hayes', 'Taylor Nguyen', 'Morgan Davis', 'Jamie Brooks']),
       createdAt,
       updatedAt: createdAt

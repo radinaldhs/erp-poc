@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { v4 as uuid } from 'uuid'
+import { Trash2 } from 'lucide-vue-next'
 import BasePageHeader from '@/components/ui/BasePageHeader.vue'
 import BaseTable from '@/components/ui/BaseTable.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
@@ -9,11 +10,13 @@ import StatusPill from '@/components/shared/StatusPill.vue'
 import EntityFormModal from '@/components/shared/EntityFormModal.vue'
 import { useHrStore } from '@/stores/hr'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import { formatDate } from '@/composables/useFormat'
 import type { AttendanceRecord, TableColumn } from '@/types'
 
 const hr = useHrStore()
 const toast = useToast()
+const confirmDialog = useConfirm()
 
 const filters = reactive({ employeeId: '', status: '' })
 
@@ -44,7 +47,8 @@ const columns: TableColumn<AttendanceRecord & { employeeName: string }>[] = [
   { key: 'employeeName', label: 'Employee', sortable: true },
   { key: 'checkIn', label: 'Check In' },
   { key: 'checkOut', label: 'Check Out' },
-  { key: 'status', label: 'Status' }
+  { key: 'status', label: 'Status' },
+  { key: 'actions', label: '', align: 'right', width: '60px' }
 ]
 
 const statusOptions = [
@@ -55,7 +59,8 @@ const statusOptions = [
   { value: 'leave', label: 'Leave' }
 ]
 
-const showCreate = ref(false)
+const showModal = ref(false)
+const editingId = ref<string | null>(null)
 const form = reactive({
   employeeId: '',
   date: '',
@@ -65,12 +70,23 @@ const form = reactive({
 })
 
 function openCreate(): void {
+  editingId.value = null
   form.employeeId = hr.employees[0]?.id ?? ''
   form.date = new Date().toISOString().slice(0, 10)
   form.checkIn = '09:00'
   form.checkOut = '17:00'
   form.status = 'present'
-  showCreate.value = true
+  showModal.value = true
+}
+
+function openEdit(row: AttendanceRecord): void {
+  editingId.value = row.id
+  form.employeeId = row.employeeId
+  form.date = row.date.slice(0, 10)
+  form.checkIn = row.checkIn
+  form.checkOut = row.checkOut ?? ''
+  form.status = row.status
+  showModal.value = true
 }
 
 function save(): void {
@@ -79,30 +95,59 @@ function save(): void {
     return
   }
   const now = new Date().toISOString()
-  hr.addAttendance({
-    id: uuid(),
-    employeeId: form.employeeId,
-    date: form.date,
-    checkIn: form.checkIn,
-    checkOut: form.checkOut,
-    status: form.status,
-    createdAt: now,
-    updatedAt: now
+  if (editingId.value) {
+    const existing = hr.attendance.find((a) => a.id === editingId.value)
+    if (!existing) return
+    hr.updateAttendance({
+      ...existing,
+      employeeId: form.employeeId,
+      date: form.date,
+      checkIn: form.checkIn,
+      checkOut: form.checkOut,
+      status: form.status,
+      updatedAt: now
+    })
+    toast.success('Attendance updated')
+  } else {
+    hr.addAttendance({
+      id: uuid(),
+      employeeId: form.employeeId,
+      date: form.date,
+      checkIn: form.checkIn,
+      checkOut: form.checkOut,
+      status: form.status,
+      createdAt: now,
+      updatedAt: now
+    })
+    toast.success('Attendance recorded')
+  }
+  showModal.value = false
+}
+
+async function remove(row: AttendanceRecord): Promise<void> {
+  const ok = await confirmDialog.confirm({
+    title: 'Delete this attendance record?',
+    message: 'This record will be permanently removed.',
+    confirmText: 'Delete',
+    tone: 'danger'
   })
-  toast.success('Attendance recorded')
-  showCreate.value = false
+  if (!ok) return
+  hr.deleteAttendance(row.id)
+  toast.success('Attendance record deleted')
 }
 </script>
 
 <template>
-  <BasePageHeader title="Attendance" subtitle="Daily check-in logs for the workforce." phase-tag="Phase 2 — Roadmap" />
+  <BasePageHeader title="Attendance" subtitle="Daily check-in logs for the workforce." />
   <BaseTable
     :columns="columns"
     :rows="rows"
     row-key="id"
+    clickable
     create-label="New Record"
     filterable
     :active-filter-count="activeFilterCount"
+    @row-click="openEdit"
     @create="openCreate"
     @reset-filters="resetFilters"
   >
@@ -120,13 +165,18 @@ function save(): void {
     <template #cell-status="{ row }">
       <StatusPill :status="row.status" />
     </template>
+    <template #cell-actions="{ row }">
+      <button class="text-text-muted hover:text-danger" @click.stop="remove(row)">
+        <Trash2 class="h-4 w-4" />
+      </button>
+    </template>
   </BaseTable>
 
   <EntityFormModal
-    :open="showCreate"
-    title="New Attendance Record"
-    save-label="Record"
-    @close="showCreate = false"
+    :open="showModal"
+    :title="editingId ? 'Edit Attendance Record' : 'New Attendance Record'"
+    :save-label="editingId ? 'Save Changes' : 'Record'"
+    @close="showModal = false"
     @submit="save"
   >
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -79,7 +79,7 @@ export function buildPurchaseOrders(count: number, vendorIds: string[], productI
 export function buildBills(count: number, vendorIds: string[], productIds: string[]): Bill[] {
   return Array.from({ length: count }, (_, i) => {
     const base = buildPurchaseDoc('BILL', i, vendorIds, productIds)
-    const status = pick(['draft', 'approved', 'paid', 'overdue'] as const)
+    const status = pick(['draft', 'pending', 'approved', 'paid', 'overdue', 'cancelled'] as const)
     const paid = status === 'paid' ? base.total : status === 'approved' ? base.total * nextFloat() : 0
     return {
       ...base,

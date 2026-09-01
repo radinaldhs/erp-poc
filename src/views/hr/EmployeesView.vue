@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { v4 as uuid } from 'uuid'
+import { Trash2 } from 'lucide-vue-next'
 import BasePageHeader from '@/components/ui/BasePageHeader.vue'
 import BaseTable from '@/components/ui/BaseTable.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
@@ -10,11 +11,13 @@ import CurrencyDisplay from '@/components/shared/CurrencyDisplay.vue'
 import EntityFormModal from '@/components/shared/EntityFormModal.vue'
 import { useHrStore } from '@/stores/hr'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import { formatDate } from '@/composables/useFormat'
 import type { Employee, TableColumn } from '@/types'
 
 const hr = useHrStore()
 const toast = useToast()
+const confirmDialog = useConfirm()
 
 const filters = reactive({ departmentId: '', status: '' })
 
@@ -48,10 +51,12 @@ const columns: TableColumn<Employee & { fullName: string; departmentName: string
   { key: 'departmentName', label: 'Department' },
   { key: 'hireDate', label: 'Hire Date', formatter: (v) => formatDate(String(v)) },
   { key: 'salary', label: 'Salary', align: 'right' },
-  { key: 'status', label: 'Status' }
+  { key: 'status', label: 'Status' },
+  { key: 'actions', label: '', align: 'right', width: '60px' }
 ]
 
-const showCreate = ref(false)
+const showModal = ref(false)
+const editingId = ref<string | null>(null)
 const form = reactive({
   code: '',
   firstName: '',
@@ -66,6 +71,7 @@ const form = reactive({
 })
 
 function openCreate(): void {
+  editingId.value = null
   form.code = `EMP-${String(hr.employees.length + 1).padStart(4, '0')}`
   form.firstName = ''
   form.lastName = ''
@@ -76,7 +82,22 @@ function openCreate(): void {
   form.hireDate = new Date().toISOString().slice(0, 10)
   form.salary = 0
   form.status = 'active'
-  showCreate.value = true
+  showModal.value = true
+}
+
+function openEdit(row: Employee): void {
+  editingId.value = row.id
+  form.code = row.code
+  form.firstName = row.firstName
+  form.lastName = row.lastName
+  form.email = row.contact.email
+  form.phone = row.contact.phone
+  form.departmentId = row.departmentId
+  form.position = row.position
+  form.hireDate = row.hireDate.slice(0, 10)
+  form.salary = row.salary
+  form.status = row.status
+  showModal.value = true
 }
 
 function save(): void {
@@ -85,34 +106,78 @@ function save(): void {
     return
   }
   const now = new Date().toISOString()
-  hr.addEmployee({
-    id: uuid(),
-    code: form.code,
-    firstName: form.firstName,
-    lastName: form.lastName,
-    contact: { email: form.email, phone: form.phone },
-    departmentId: form.departmentId,
-    position: form.position,
-    hireDate: form.hireDate,
-    salary: Number(form.salary) || 0,
-    status: form.status,
-    createdAt: now,
-    updatedAt: now
+  if (editingId.value) {
+    const existing = hr.employeeById(editingId.value)
+    if (!existing) return
+    hr.updateEmployee({
+      ...existing,
+      code: form.code,
+      firstName: form.firstName,
+      lastName: form.lastName,
+      contact: { email: form.email, phone: form.phone },
+      departmentId: form.departmentId,
+      position: form.position,
+      hireDate: form.hireDate,
+      salary: Number(form.salary) || 0,
+      status: form.status,
+      updatedAt: now
+    })
+    toast.success('Employee updated', `${form.firstName} ${form.lastName}`)
+  } else {
+    hr.addEmployee({
+      id: uuid(),
+      code: form.code,
+      firstName: form.firstName,
+      lastName: form.lastName,
+      contact: { email: form.email, phone: form.phone },
+      departmentId: form.departmentId,
+      position: form.position,
+      hireDate: form.hireDate,
+      salary: Number(form.salary) || 0,
+      status: form.status,
+      createdAt: now,
+      updatedAt: now
+    })
+    toast.success('Employee created', `${form.firstName} ${form.lastName}`)
+  }
+  showModal.value = false
+}
+
+function hasReferences(employeeId: string): boolean {
+  return (
+    hr.payroll.some((p) => p.employeeId === employeeId) ||
+    hr.leaveRequests.some((lr) => lr.employeeId === employeeId)
+  )
+}
+
+async function remove(row: Employee): Promise<void> {
+  if (hasReferences(row.id)) {
+    toast.error('Cannot delete employee', 'This employee has payroll or leave records on file.')
+    return
+  }
+  const ok = await confirmDialog.confirm({
+    title: 'Delete this employee?',
+    message: `${row.firstName} ${row.lastName} will be permanently removed.`,
+    confirmText: 'Delete',
+    tone: 'danger'
   })
-  toast.success('Employee created', `${form.firstName} ${form.lastName}`)
-  showCreate.value = false
+  if (!ok) return
+  hr.deleteEmployee(row.id)
+  toast.success('Employee deleted', `${row.firstName} ${row.lastName}`)
 }
 </script>
 
 <template>
-  <BasePageHeader title="Employees" subtitle="Team roster across departments." phase-tag="Phase 2 — Roadmap" />
+  <BasePageHeader title="Employees" subtitle="Team roster across departments." />
   <BaseTable
     :columns="columns"
     :rows="rows"
     row-key="id"
+    clickable
     create-label="New Employee"
     filterable
     :active-filter-count="activeFilterCount"
+    @row-click="openEdit"
     @create="openCreate"
     @reset-filters="resetFilters"
   >
@@ -141,13 +206,18 @@ function save(): void {
     <template #cell-status="{ row }">
       <StatusPill :status="row.status" />
     </template>
+    <template #cell-actions="{ row }">
+      <button class="text-text-muted hover:text-danger" @click.stop="remove(row)">
+        <Trash2 class="h-4 w-4" />
+      </button>
+    </template>
   </BaseTable>
 
   <EntityFormModal
-    :open="showCreate"
-    title="New Employee"
-    save-label="Create Employee"
-    @close="showCreate = false"
+    :open="showModal"
+    :title="editingId ? 'Edit Employee' : 'New Employee'"
+    :save-label="editingId ? 'Save Changes' : 'Create Employee'"
+    @close="showModal = false"
     @submit="save"
   >
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
