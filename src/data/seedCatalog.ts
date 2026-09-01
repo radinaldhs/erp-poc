@@ -40,20 +40,33 @@ export function buildWarehouses(count = 4): Warehouse[] {
   })
 }
 
+/**
+ * Most product/warehouse lines carry healthy stock; a small, deterministic subset (5-15
+ * lines) sit below reorder level so the "Low Stock" stat and table stay believable and
+ * non-zero without flooding the demo with alerts.
+ */
 export function buildStockLevels(products: Product[], warehouses: Warehouse[]): StockLevel[] {
-  const out: StockLevel[] = []
-  products.forEach((product) => {
-    warehouses.forEach((wh) => {
-      out.push({
-        id: uid('sl_'),
-        productId: product.id,
-        warehouseId: wh.id,
-        quantity: nextInt(0, 500),
-        reservedQuantity: nextInt(0, 20)
-      })
-    })
+  const combos = products.flatMap((product) => warehouses.map((warehouse) => ({ product, warehouse })))
+
+  const lowStockTarget = nextInt(5, 15)
+  const lowStockIndices = new Set<number>()
+  while (lowStockIndices.size < Math.min(lowStockTarget, combos.length)) {
+    lowStockIndices.add(nextInt(0, combos.length - 1))
+  }
+
+  return combos.map(({ product, warehouse }, index) => {
+    const isLow = lowStockIndices.has(index)
+    const quantity = isLow
+      ? Math.max(0, product.reorderLevel - nextInt(1, 20))
+      : product.reorderLevel + nextInt(50, 400)
+    return {
+      id: uid('sl_'),
+      productId: product.id,
+      warehouseId: warehouse.id,
+      quantity,
+      reservedQuantity: nextInt(0, Math.min(20, quantity))
+    }
   })
-  return out
 }
 
 export function buildStockMovements(products: Product[], warehouses: Warehouse[], count = 60): StockMovement[] {

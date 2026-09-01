@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { v4 as uuid } from 'uuid'
+import { Check, X } from 'lucide-vue-next'
 import BasePageHeader from '@/components/ui/BasePageHeader.vue'
 import BaseTable from '@/components/ui/BaseTable.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
@@ -10,11 +11,13 @@ import StatusPill from '@/components/shared/StatusPill.vue'
 import EntityFormModal from '@/components/shared/EntityFormModal.vue'
 import { useHrStore } from '@/stores/hr'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import { formatDate } from '@/composables/useFormat'
 import type { LeaveRequest, TableColumn } from '@/types'
 
 const hr = useHrStore()
 const toast = useToast()
+const confirmDialog = useConfirm()
 
 const filters = reactive({ type: '', status: '', employeeId: '' })
 
@@ -49,8 +52,35 @@ const columns: TableColumn<LeaveRequest & { employeeName: string }>[] = [
   { key: 'endDate', label: 'End', formatter: (v) => formatDate(String(v)) },
   { key: 'days', label: 'Days', align: 'right' },
   { key: 'reason', label: 'Reason' },
-  { key: 'status', label: 'Status' }
+  { key: 'status', label: 'Status' },
+  { key: 'actions', label: '', align: 'right', width: '80px' }
 ]
+
+async function approve(row: LeaveRequest): Promise<void> {
+  const existing = hr.leaveRequests.find((lr) => lr.id === row.id)
+  if (!existing) return
+  const ok = await confirmDialog.confirm({
+    title: 'Approve this leave request?',
+    message: 'The request will be marked as approved.',
+    tone: 'default'
+  })
+  if (!ok) return
+  hr.updateLeave({ ...existing, status: 'approved', updatedAt: new Date().toISOString() })
+  toast.success('Leave request approved')
+}
+
+async function reject(row: LeaveRequest): Promise<void> {
+  const existing = hr.leaveRequests.find((lr) => lr.id === row.id)
+  if (!existing) return
+  const ok = await confirmDialog.confirm({
+    title: 'Reject this leave request?',
+    message: 'The request will be marked as rejected.',
+    tone: 'danger'
+  })
+  if (!ok) return
+  hr.updateLeave({ ...existing, status: 'rejected', updatedAt: new Date().toISOString() })
+  toast.success('Leave request rejected')
+}
 
 const typeOptions = [
   { value: '', label: 'Any type' },
@@ -118,7 +148,7 @@ function save(): void {
 </script>
 
 <template>
-  <BasePageHeader title="Leave Requests" subtitle="Time-off requests and approval states." phase-tag="Phase 2 — Roadmap" />
+  <BasePageHeader title="Leave Requests" subtitle="Time-off requests and approval states." />
   <BaseTable
     :columns="columns"
     :rows="rows"
@@ -143,6 +173,16 @@ function save(): void {
     </template>
     <template #cell-status="{ row }"><StatusPill :status="row.status" /></template>
     <template #cell-type="{ row }"><span class="capitalize">{{ row.type }}</span></template>
+    <template #cell-actions="{ row }">
+      <div v-if="row.status === 'pending'" class="flex justify-end gap-2">
+        <button class="text-text-muted hover:text-success" @click.stop="approve(row)">
+          <Check class="h-4 w-4" />
+        </button>
+        <button class="text-text-muted hover:text-danger" @click.stop="reject(row)">
+          <X class="h-4 w-4" />
+        </button>
+      </div>
+    </template>
   </BaseTable>
 
   <EntityFormModal

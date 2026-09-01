@@ -40,12 +40,12 @@ const phases: Phase[] = [
     deliverables: ['Quotes, orders, invoices', 'CRM leads and opportunities', 'Project tracking']
   },
   {
-    name: 'Phase 2 Scaffolding',
-    description: 'Stubbed modules, roadmap messaging, role-based navigation.',
+    name: 'Extended ERP Modules',
+    description: 'Purchasing, Inventory, Accounting, HR, and Manufacturing, full CRUD and workflows.',
     startWeek: 12,
     endWeek: 15,
     tone: 'warning',
-    deliverables: ['Phase 2 module shells', 'Roadmap documentation']
+    deliverables: ['Purchasing, Inventory, Accounting, HR, and Manufacturing modules', 'Full CRUD and status workflows']
   },
   {
     name: 'QA and Hardening',
@@ -74,8 +74,8 @@ const weekTicks = Array.from({ length: MAX_WEEK }, (_, i) => i + 1)
       <BaseBadge tone="primary">Timeline</BaseBadge>
       <h1 class="text-4xl font-semibold tracking-tight">Delivery Plan</h1>
       <p class="text-text-muted max-w-2xl mx-auto">
-        A parallelized 21-week plan. Priority features unlock value early; Phase 2 scaffolding keeps long-term
-        direction visible without blocking the proof-of-concept launch.
+        A parallelized 21-week plan. Priority features unlock value early; the extended ERP modules round out
+        the full operational surface ahead of launch.
       </p>
     </div>
 

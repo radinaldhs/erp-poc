@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { v4 as uuid } from 'uuid'
+import { Trash2 } from 'lucide-vue-next'
 import BasePageHeader from '@/components/ui/BasePageHeader.vue'
 import BaseTable from '@/components/ui/BaseTable.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
@@ -9,11 +10,15 @@ import StatusPill from '@/components/shared/StatusPill.vue'
 import CurrencyDisplay from '@/components/shared/CurrencyDisplay.vue'
 import EntityFormModal from '@/components/shared/EntityFormModal.vue'
 import { useInventoryStore } from '@/stores/inventory'
+import { useManufacturingStore } from '@/stores/manufacturing'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import type { Product, TableColumn } from '@/types'
 
 const inventory = useInventoryStore()
+const manufacturing = useManufacturingStore()
 const toast = useToast()
+const confirmDialog = useConfirm()
 
 const filters = reactive({ category: '', status: '' })
 
@@ -46,10 +51,12 @@ const columns: TableColumn<Product>[] = [
   { key: 'purchasePrice', label: 'Cost', align: 'right' },
   { key: 'salePrice', label: 'Price', align: 'right' },
   { key: 'reorderLevel', label: 'Reorder', align: 'right' },
-  { key: 'status', label: 'Status' }
+  { key: 'status', label: 'Status' },
+  { key: 'actions', label: '', align: 'right', width: '60px' }
 ]
 
-const showCreate = ref(false)
+const showModal = ref(false)
+const editingId = ref<string | null>(null)
 const form = reactive({
   sku: '',
   name: '',
@@ -62,6 +69,7 @@ const form = reactive({
 })
 
 function openCreate(): void {
+  editingId.value = null
   form.sku = `SKU-${String(inventory.products.length + 1).padStart(4, '0')}`
   form.name = ''
   form.category = categories.value[0] ?? 'General'
@@ -70,7 +78,20 @@ function openCreate(): void {
   form.salePrice = 0
   form.reorderLevel = 10
   form.status = 'active'
-  showCreate.value = true
+  showModal.value = true
+}
+
+function openEdit(row: Product): void {
+  editingId.value = row.id
+  form.sku = row.sku
+  form.name = row.name
+  form.category = row.category
+  form.unit = row.unit
+  form.purchasePrice = row.purchasePrice
+  form.salePrice = row.salePrice
+  form.reorderLevel = row.reorderLevel
+  form.status = row.status
+  showModal.value = true
 }
 
 function save(): void {
@@ -79,33 +100,80 @@ function save(): void {
     return
   }
   const now = new Date().toISOString()
-  inventory.addProduct({
-    id: uuid(),
-    sku: form.sku,
-    name: form.name,
-    category: form.category,
-    unit: form.unit,
-    purchasePrice: Number(form.purchasePrice) || 0,
-    salePrice: Number(form.salePrice) || 0,
-    reorderLevel: Number(form.reorderLevel) || 0,
-    status: form.status,
-    createdAt: now,
-    updatedAt: now
+  if (editingId.value) {
+    const existing = inventory.productById(editingId.value)
+    if (!existing) return
+    inventory.updateProduct({
+      ...existing,
+      sku: form.sku,
+      name: form.name,
+      category: form.category,
+      unit: form.unit,
+      purchasePrice: Number(form.purchasePrice) || 0,
+      salePrice: Number(form.salePrice) || 0,
+      reorderLevel: Number(form.reorderLevel) || 0,
+      status: form.status,
+      updatedAt: now
+    })
+    toast.success('Product updated', form.name)
+  } else {
+    inventory.addProduct({
+      id: uuid(),
+      sku: form.sku,
+      name: form.name,
+      category: form.category,
+      unit: form.unit,
+      purchasePrice: Number(form.purchasePrice) || 0,
+      salePrice: Number(form.salePrice) || 0,
+      reorderLevel: Number(form.reorderLevel) || 0,
+      status: form.status,
+      createdAt: now,
+      updatedAt: now
+    })
+    toast.success('Product created', form.name)
+  }
+  showModal.value = false
+}
+
+function hasReferences(productId: string): boolean {
+  return (
+    // Stock levels are seeded as a full product x warehouse cross join, so a row simply
+    // existing doesn't mean the product actually holds or reserves any stock.
+    inventory.stockLevels.some((sl) => sl.productId === productId && (sl.quantity > 0 || sl.reservedQuantity > 0)) ||
+    inventory.stockMovements.some((m) => m.productId === productId) ||
+    manufacturing.boms.some((b) => b.productId === productId || b.components.some((c) => c.productId === productId)) ||
+    manufacturing.workOrders.some((w) => w.productId === productId)
+  )
+}
+
+async function remove(row: Product): Promise<void> {
+  if (hasReferences(row.id)) {
+    toast.error('Cannot delete product', 'This product has stock, BOM, or work order records on file.')
+    return
+  }
+  const ok = await confirmDialog.confirm({
+    title: 'Delete this product?',
+    message: `${row.name} will be permanently removed.`,
+    confirmText: 'Delete',
+    tone: 'danger'
   })
-  toast.success('Product created', form.name)
-  showCreate.value = false
+  if (!ok) return
+  inventory.deleteProduct(row.id)
+  toast.success('Product deleted', row.name)
 }
 </script>
 
 <template>
-  <BasePageHeader title="Products" subtitle="Master list of SKUs available for sale and purchase." phase-tag="Phase 2 — Roadmap" />
+  <BasePageHeader title="Products" subtitle="Master list of SKUs available for sale and purchase." />
   <BaseTable
     :columns="columns"
     :rows="rows"
     row-key="id"
+    clickable
     create-label="New Product"
     filterable
     :active-filter-count="activeFilterCount"
+    @row-click="openEdit"
     @create="openCreate"
     @reset-filters="resetFilters"
   >
@@ -137,13 +205,18 @@ function save(): void {
     <template #cell-status="{ row }">
       <StatusPill :status="row.status" />
     </template>
+    <template #cell-actions="{ row }">
+      <button class="text-text-muted hover:text-danger" @click.stop="remove(row)">
+        <Trash2 class="h-4 w-4" />
+      </button>
+    </template>
   </BaseTable>
 
   <EntityFormModal
-    :open="showCreate"
-    title="New Product"
-    save-label="Create Product"
-    @close="showCreate = false"
+    :open="showModal"
+    :title="editingId ? 'Edit Product' : 'New Product'"
+    :save-label="editingId ? 'Save Changes' : 'Create Product'"
+    @close="showModal = false"
     @submit="save"
   >
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">

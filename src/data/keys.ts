@@ -44,4 +44,4 @@ export const STORAGE_KEYS = {
 } as const
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]
-export const SEED_VERSION = 1
+export const SEED_VERSION = 4

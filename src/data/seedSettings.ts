@@ -66,13 +66,36 @@ export function buildNotifications(): AppNotification[] {
   }))
 }
 
+const ACTIVITY_ENTITIES: Record<string, string[]> = {
+  sales: ['a sales order', 'an invoice', 'a quote', 'a customer record'],
+  promos: ['a promo submission', 'a promo approval request'],
+  crm: ['a lead', 'an opportunity', 'a contact'],
+  inventory: ['a purchase order', 'a stock movement', 'a product listing'],
+  projects: ['a project task', 'a timesheet entry']
+}
+
+const ACTIVITY_TITLES = ['Created record', 'Updated status', 'Approved entry', 'Rejected entry', 'Submitted form'] as const
+
+const ACTIVITY_TEMPLATES: Record<(typeof ACTIVITY_TITLES)[number], (entity: string) => string> = {
+  'Created record': (entity) => `Created ${entity}`,
+  'Updated status': (entity) => `Updated the status of ${entity}`,
+  'Approved entry': (entity) => `Approved ${entity}`,
+  'Rejected entry': (entity) => `Rejected ${entity}`,
+  'Submitted form': (entity) => `Submitted ${entity} for review`
+}
+
 export function buildActivity(): ActivityEntry[] {
-  return Array.from({ length: 12 }, () => ({
-    id: uid('av_'),
-    module: pick(['sales', 'promos', 'crm', 'inventory', 'projects']),
-    title: pick(['Created record', 'Updated status', 'Approved entry', 'Rejected entry', 'Submitted form']),
-    description: 'Seeded demo activity entry.',
-    timestamp: pastDateISO(10),
-    actor: pick(['Alex Carter', 'Parker Hayes', 'Jamie Brooks', 'Taylor Nguyen'])
-  }))
+  return Array.from({ length: 12 }, () => {
+    const module = pick(['sales', 'promos', 'crm', 'inventory', 'projects'])
+    const title = pick(ACTIVITY_TITLES)
+    const entity = pick(ACTIVITY_ENTITIES[module])
+    return {
+      id: uid('av_'),
+      module,
+      title,
+      description: ACTIVITY_TEMPLATES[title](entity),
+      timestamp: pastDateISO(10),
+      actor: pick(['Alex Carter', 'Parker Hayes', 'Jamie Brooks', 'Taylor Nguyen'])
+    }
+  })
 }

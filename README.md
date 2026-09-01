@@ -63,8 +63,8 @@ You can also switch roles on the fly from the role switcher in the topbar. This 
 
 ### Standard Modules
 
-- Dashboard, Sales (Quotes / Orders / Invoices / Customers), CRM, Projects, Reports, Settings — fully implemented
-- Purchasing, Inventory, Accounting, HR, Manufacturing — Phase 2 read-only views flagged with a `Phase 2 — Roadmap` badge on the page header
+- Dashboard, Sales (Quotes / Orders / Invoices / Customers), CRM, Projects, Reports, Settings - fully implemented
+- Purchasing (Vendors / Purchase Orders / Bills), Inventory (Products / Warehouses / Stock Levels / Stock Movements), Accounting (Chart of Accounts / Journal Entries / General Ledger / Trial Balance / Profit and Loss / Balance Sheet), HR (Employees / Departments / Attendance / Payroll / Leave Requests), and Manufacturing (BOM / Work Orders / Planning) - fully implemented with create/edit/delete, status workflows, and drill-down detail pages, same as the modules above
 
 ## Project Structure
 
@@ -89,7 +89,6 @@ src/
 ## Limitations
 
 - No network / backend: no real auth, authorization is role-based and trusted client-side
-- Phase 2 modules show representative read-only data — no editing, no workflows
 - Excel parsing is client-side only; large files (>50k rows) are not tuned for streaming
 - The PDF approval letter uses a static letterhead ("Demo Company") and is intended as a visual artifact only
 

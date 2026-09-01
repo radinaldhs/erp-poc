@@ -1,20 +1,30 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { v4 as uuid } from 'uuid'
+import { Trash2, ClipboardList, DollarSign, PackageCheck } from 'lucide-vue-next'
 import BasePageHeader from '@/components/ui/BasePageHeader.vue'
 import BaseTable from '@/components/ui/BaseTable.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
+import BaseStatCard from '@/components/ui/BaseStatCard.vue'
 import StatusPill from '@/components/shared/StatusPill.vue'
 import CurrencyDisplay from '@/components/shared/CurrencyDisplay.vue'
 import EntityFormModal from '@/components/shared/EntityFormModal.vue'
 import { usePurchasingStore } from '@/stores/purchasing'
 import { useToast } from '@/composables/useToast'
-import { formatDate } from '@/composables/useFormat'
+import { useConfirm } from '@/composables/useConfirm'
+import { formatCurrency, formatDate, formatNumber } from '@/composables/useFormat'
 import type { PurchaseOrder, TableColumn } from '@/types'
 
 const purchasing = usePurchasingStore()
+const router = useRouter()
 const toast = useToast()
+const confirmDialog = useConfirm()
+
+const openPOs = computed(() => purchasing.purchaseOrders.filter((p) => p.status !== 'received' && p.status !== 'cancelled'))
+const totalCommitted = computed(() => openPOs.value.reduce((s, p) => s + p.total, 0))
+const receivedCount = computed(() => purchasing.purchaseOrders.filter((p) => p.status === 'received').length)
 
 const filters = reactive({ status: '', vendorId: '' })
 
@@ -41,8 +51,29 @@ const columns: TableColumn<PurchaseOrder>[] = [
   { key: 'issueDate', label: 'Issued', formatter: (v) => formatDate(String(v)) },
   { key: 'dueDate', label: 'Due', formatter: (v) => formatDate(String(v)) },
   { key: 'total', label: 'Total', align: 'right' },
-  { key: 'status', label: 'Status' }
+  { key: 'status', label: 'Status' },
+  { key: 'actions', label: '', align: 'right', width: '60px' }
 ]
+
+function openDetail(row: PurchaseOrder): void {
+  router.push({ name: 'purchase-order-detail', params: { id: row.id } })
+}
+
+function canDelete(row: PurchaseOrder): boolean {
+  return row.status === 'draft' || row.status === 'cancelled'
+}
+
+async function remove(row: PurchaseOrder): Promise<void> {
+  const ok = await confirmDialog.confirm({
+    title: 'Delete this purchase order?',
+    message: `${row.number} will be permanently removed.`,
+    confirmText: 'Delete',
+    tone: 'danger'
+  })
+  if (!ok) return
+  purchasing.deletePurchaseOrder(row.id)
+  toast.success('Purchase order deleted', row.number)
+}
 
 const statusOptions = [
   { value: '', label: 'Any status' },
@@ -104,14 +135,21 @@ function save(): void {
 </script>
 
 <template>
-  <BasePageHeader title="Purchase Orders" subtitle="Commitments issued to vendors." phase-tag="Phase 2 — Roadmap" />
+  <BasePageHeader title="Purchase Orders" subtitle="Commitments issued to vendors." />
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-3">
+    <BaseStatCard label="Open POs" :value="formatNumber(openPOs.length)" :icon="ClipboardList" tone="primary" />
+    <BaseStatCard label="Total Committed" :value="formatCurrency(totalCommitted)" :icon="DollarSign" tone="warning" />
+    <BaseStatCard label="Received" :value="formatNumber(receivedCount)" :icon="PackageCheck" tone="success" />
+  </div>
   <BaseTable
     :columns="columns"
     :rows="rows"
     row-key="id"
+    clickable
     create-label="New PO"
     filterable
     :active-filter-count="activeFilterCount"
+    @row-click="openDetail"
     @create="openCreate"
     @reset-filters="resetFilters"
   >
@@ -131,6 +169,15 @@ function save(): void {
     </template>
     <template #cell-status="{ row }">
       <StatusPill :status="row.status" />
+    </template>
+    <template #cell-actions="{ row }">
+      <button
+        v-if="canDelete(row)"
+        class="text-text-muted hover:text-danger"
+        @click.stop="remove(row)"
+      >
+        <Trash2 class="h-4 w-4" />
+      </button>
     </template>
   </BaseTable>
 

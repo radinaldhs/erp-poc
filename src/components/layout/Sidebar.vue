@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import {
   LayoutDashboard,
@@ -42,13 +41,7 @@ import {
   Clock3,
   FileBarChart,
   Settings,
-  ChevronDown,
-  ChevronRight,
-  Briefcase,
-  Layers,
-  DollarSign,
-  Presentation,
-  Route
+  Layers
 } from 'lucide-vue-next'
 import { useUiStore } from '@/stores/ui'
 
@@ -64,8 +57,6 @@ interface NavGroup {
   key: string
   label: string
   items: NavItem[]
-  collapsible?: boolean
-  accent?: boolean
 }
 
 const groups: NavGroup[] = [
@@ -116,28 +107,51 @@ const groups: NavGroup[] = [
     ]
   },
   {
-    key: 'phase2',
-    label: 'Phase 2 — Roadmap',
-    collapsible: true,
+    key: 'purchasing',
+    label: 'Purchasing',
     items: [
       { to: '/purchasing/orders', label: 'Purchase Orders', icon: ShoppingCart },
       { to: '/purchasing/vendors', label: 'Vendors', icon: Building2 },
-      { to: '/purchasing/bills', label: 'Bills', icon: CircleDollarSign },
+      { to: '/purchasing/bills', label: 'Bills', icon: CircleDollarSign }
+    ]
+  },
+  {
+    key: 'inventory',
+    label: 'Inventory',
+    items: [
       { to: '/inventory/products', label: 'Products', icon: Package },
       { to: '/inventory/stock', label: 'Stock Levels', icon: Layers },
       { to: '/inventory/warehouses', label: 'Warehouses', icon: WarehouseIcon },
-      { to: '/inventory/movements', label: 'Stock Movements', icon: ArrowRightLeft },
+      { to: '/inventory/movements', label: 'Stock Movements', icon: ArrowRightLeft }
+    ]
+  },
+  {
+    key: 'accounting',
+    label: 'Accounting',
+    items: [
       { to: '/accounting/accounts', label: 'Chart of Accounts', icon: Book },
       { to: '/accounting/journals', label: 'Journals', icon: BookOpen },
       { to: '/accounting/ledger', label: 'General Ledger', icon: Landmark },
       { to: '/accounting/trial-balance', label: 'Trial Balance', icon: Scale },
       { to: '/accounting/pnl', label: 'Profit and Loss', icon: TrendingUp },
-      { to: '/accounting/balance-sheet', label: 'Balance Sheet', icon: Landmark },
+      { to: '/accounting/balance-sheet', label: 'Balance Sheet', icon: Landmark }
+    ]
+  },
+  {
+    key: 'hr',
+    label: 'HR',
+    items: [
       { to: '/hr/employees', label: 'Employees', icon: UserCog },
       { to: '/hr/departments', label: 'Departments', icon: Building },
       { to: '/hr/attendance', label: 'Attendance', icon: CalendarCheck },
       { to: '/hr/payroll', label: 'Payroll', icon: Banknote },
-      { to: '/hr/leave', label: 'Leave Requests', icon: ClipboardCheck },
+      { to: '/hr/leave', label: 'Leave Requests', icon: ClipboardCheck }
+    ]
+  },
+  {
+    key: 'manufacturing',
+    label: 'Manufacturing',
+    items: [
       { to: '/manufacturing/bom', label: 'BOM', icon: Layers },
       { to: '/manufacturing/work-orders', label: 'Work Orders', icon: Factory },
       { to: '/manufacturing/planning', label: 'Planning', icon: Calendar }
@@ -154,12 +168,6 @@ const groups: NavGroup[] = [
 ]
 
 const isActive = (path: string): boolean => route.path === path
-
-const showPhase2 = computed(() => !ui.phase2Collapsed)
-
-function togglePhase2(): void {
-  ui.togglePhase2()
-}
 </script>
 
 <template>
@@ -179,24 +187,10 @@ function togglePhase2(): void {
 
     <nav class="flex-1 overflow-y-auto py-3 scrollbar-thin">
       <div v-for="group in groups" :key="group.key" class="px-2 pb-4">
-        <div
-          v-if="group.collapsible"
-          class="flex items-center justify-between px-2 py-1 cursor-pointer"
-          @click="togglePhase2"
-        >
-          <span class="text-[11px] uppercase tracking-wider text-text-muted">{{ group.label }}</span>
-          <component :is="showPhase2 ? ChevronDown : ChevronRight" class="h-3.5 w-3.5 text-text-muted" />
-        </div>
-        <div v-else class="px-2 py-1 text-[11px] uppercase tracking-wider text-text-muted">
+        <div class="px-2 py-1 text-[11px] uppercase tracking-wider text-text-muted">
           {{ group.label }}
         </div>
-        <div
-          v-if="!group.collapsible || showPhase2"
-          :class="[
-            'mt-1 space-y-0.5',
-            group.accent && 'rounded-md bg-primary/5 p-1'
-          ]"
-        >
+        <div class="mt-1 space-y-0.5">
           <RouterLink
             v-for="item in group.items"
             :key="item.to + item.label"

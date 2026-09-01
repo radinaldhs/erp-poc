@@ -7,7 +7,15 @@ const route = useRoute()
 
 const crumbs = computed<string[]>(() => {
   const parts = route.path.split('/').filter(Boolean)
-  return parts.map((p) => p.replace(/-/g, ' '))
+  const idParam = typeof route.params.id === 'string' ? route.params.id : undefined
+  return parts.map((p) => {
+    // A detail route's last segment is a raw entity id (e.g. "Po_8nwscbzg5a"), not
+    // something a user should see. Swap it for the route's own descriptive title.
+    if (idParam && p === idParam) {
+      return typeof route.meta.title === 'string' ? route.meta.title : p.replace(/-/g, ' ')
+    }
+    return p.replace(/-/g, ' ')
+  })
 })
 </script>
 
