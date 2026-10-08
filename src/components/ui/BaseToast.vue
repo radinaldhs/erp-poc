@@ -20,7 +20,7 @@ const toneMap = {
 
 <template>
   <Teleport to="body">
-    <div class="fixed top-4 right-4 z-[60] flex flex-col gap-2 w-80">
+    <div class="fixed top-4 right-4 left-4 sm:left-auto z-[60] flex flex-col gap-2 sm:w-80">
       <div
         v-for="toast in toasts"
         :key="toast.id"

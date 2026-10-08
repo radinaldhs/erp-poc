@@ -19,7 +19,7 @@ function drawFooter(doc: jsPDF): void {
   doc.setFontSize(8)
   doc.setTextColor(120)
   doc.text(
-    `Generated on ${new Date().toLocaleString()} — This document is for demonstration purposes.`,
+    `Generated on ${new Date().toLocaleString()} by Radinal ERP (radinal.com). This document is for demonstration purposes.`,
     14,
     pageHeight - 10
   )

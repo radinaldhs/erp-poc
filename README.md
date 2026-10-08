@@ -1,8 +1,12 @@
-# ERP Proof of Concept
+# Radinal ERP
 
-A browser-only Enterprise Resource Planning proof-of-concept built with Vue 3, Pinia, and TypeScript. All data is generated on first load, persisted in the browser via `localStorage`, and can be reset from the Settings module at any time.
+**Designed and built by [Radinal](https://radinal.com).**
 
-The POC is intentionally generic: it uses `Demo Company` as the host organization and customer names such as `Customer A`, `Customer B`, and `Customer C`. It is designed to be cloned, rebranded, and demoed with no backend or network calls.
+Radinal ERP is a browser-only Enterprise Resource Planning proof of concept built with Vue 3, Pinia, and TypeScript. All data is generated on first load, persisted in the browser via `localStorage`, and can be reset from the Settings module at any time.
+
+The sample tenant inside the app is a fictional `Demo Company` with customer names such as `Customer A`, `Customer B`, and `Customer C`. It runs with no backend or network calls.
+
+> **Want to build this for your company?** Please visit [radinal.com](https://radinal.com).
 
 ## Tech Stack
 
@@ -30,17 +34,9 @@ npm run build     # type-check + production build
 npm run preview   # serve the production bundle
 ```
 
-Login with any of the seeded users (password is the email local-part, i.e. everything before `@`):
+Sign in with any non-empty email and password. The login form is pre-filled with `demo@democompany.example.com` / `demopass`.
 
-| Role               | Email                         | Password    |
-| ------------------ | ----------------------------- | ----------- |
-| Admin              | admin@demo.co                 | admin       |
-| Sales              | sales@demo.co                 | sales       |
-| Area Manager       | area.manager@demo.co          | area.manager |
-| Regional Manager   | regional.manager@demo.co      | regional.manager |
-| Finance Director   | finance.director@demo.co      | finance.director |
-
-You can also switch roles on the fly from the role switcher in the topbar. This is a demo convenience and is not part of a real-world auth flow.
+Every session starts as `Admin`. Switch roles (Sales, Area Manager, Regional Manager, Finance Director) from the role switcher in the topbar to walk through the promo approval chain. This is a demo convenience and is not part of a real-world auth flow.
 
 ## Feature Map
 
@@ -58,7 +54,7 @@ You can also switch roles on the fly from the role switcher in the topbar. This 
    - Submission wizard (Basics → Timing → Financials → Justification)
    - Status machine: `Submitted → Pending Area → Pending Regional → Pending Finance → Approved` (or `Rejected` at any tier)
    - Role-based approvers with audit log and PDF approval letter
-4. Vendor Proposal (`Vendor Proposal`)
+4. Proposal by Radinal (`/proposal`)
    - Five-section static proposal: Company Profile, Portfolio, Solution, Cost Estimate, Timeline
 
 ### Standard Modules
@@ -90,7 +86,7 @@ src/
 
 - No network / backend: no real auth, authorization is role-based and trusted client-side
 - Excel parsing is client-side only; large files (>50k rows) are not tuned for streaming
-- The PDF approval letter uses a static letterhead ("Demo Company") and is intended as a visual artifact only
+- The PDF approval letter uses the tenant name ("Demo Company") as its letterhead, carries a "Radinal ERP (radinal.com)" footer, and is intended as a visual artifact only
 
 ## Scripts
 
@@ -123,4 +119,8 @@ Vercel automatically detects the Vite framework, runs `npm install` + `npm run b
 - Immutable caching for hashed assets under `/assets/*`
 - No-cache on `index.html` so new deploys are picked up immediately
 
-No environment variables or backend services are required — the app is fully client-side.
+No environment variables or backend services are required. The app is fully client-side.
+
+## Credits
+
+Radinal ERP is designed and built by [Radinal](https://radinal.com). Want something like this for your company? Visit [radinal.com](https://radinal.com).

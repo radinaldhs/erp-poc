@@ -198,8 +198,8 @@ async function remove(row: Bom): Promise<void> {
     </div>
     <BaseTextarea v-model="form.notes" label="Notes" :rows="3" />
 
-    <div class="card overflow-hidden">
-      <table class="w-full text-sm">
+    <div class="card overflow-x-auto scrollbar-thin">
+      <table class="w-full min-w-[440px] text-sm">
         <thead class="bg-surface/60 text-text-muted text-xs uppercase tracking-wide">
           <tr>
             <th class="px-3 py-2 text-left">Component</th>

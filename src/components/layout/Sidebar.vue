@@ -41,7 +41,8 @@ import {
   Clock3,
   FileBarChart,
   Settings,
-  Layers
+  Layers,
+  X
 } from 'lucide-vue-next'
 import { useUiStore } from '@/stores/ui'
 
@@ -173,19 +174,29 @@ const isActive = (path: string): boolean => route.path === path
 <template>
   <aside
     :class="[
-      'fixed lg:static inset-y-0 left-0 z-40 w-64 bg-surface border-r border-border flex flex-col transition-transform',
+      'fixed lg:sticky top-0 left-0 z-40 h-screen h-[100dvh] w-64 shrink-0 bg-surface border-r border-border flex flex-col transition-transform',
       ui.sidebarCollapsed ? '-translate-x-full' : 'translate-x-0',
       'lg:translate-x-0'
     ]"
   >
-    <div class="h-14 flex items-center justify-between px-4 border-b border-border">
-      <RouterLink to="/dashboard" class="flex items-center gap-2 font-semibold">
-        <div class="h-8 w-8 rounded-md bg-primary text-primary-foreground inline-flex items-center justify-center font-bold">E</div>
-        <span>ERP POC</span>
+    <div class="h-14 shrink-0 flex items-center justify-between px-4 border-b border-border">
+      <RouterLink to="/dashboard" class="flex items-center gap-2 font-semibold min-w-0">
+        <div class="h-8 w-8 shrink-0 rounded-md bg-primary text-primary-foreground inline-flex items-center justify-center font-bold">R</div>
+        <span class="leading-tight min-w-0">
+          <span class="block truncate">Radinal ERP</span>
+          <span class="block text-[11px] font-normal text-text-muted truncate">by Radinal</span>
+        </span>
       </RouterLink>
+      <button
+        class="h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-border/40 lg:hidden"
+        aria-label="Close menu"
+        @click="ui.toggleSidebar"
+      >
+        <X class="h-5 w-5" />
+      </button>
     </div>
 
-    <nav class="flex-1 overflow-y-auto py-3 scrollbar-thin">
+    <nav class="flex-1 min-h-0 overflow-y-auto overscroll-contain py-3 scrollbar-thin">
       <div v-for="group in groups" :key="group.key" class="px-2 pb-4">
         <div class="px-2 py-1 text-[11px] uppercase tracking-wider text-text-muted">
           {{ group.label }}
@@ -196,7 +207,7 @@ const isActive = (path: string): boolean => route.path === path
             :key="item.to + item.label"
             :to="item.to"
             :class="[
-              'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors',
+              'flex items-center gap-2 rounded-md px-2.5 py-2 lg:py-1.5 text-sm transition-colors',
               isActive(item.to)
                 ? 'bg-primary/10 text-primary font-medium'
                 : 'text-text hover:bg-border/40'
@@ -209,8 +220,11 @@ const isActive = (path: string): boolean => route.path === path
       </div>
     </nav>
 
-    <div class="border-t border-border p-3 text-[11px] text-text-muted">
-      <p>Demo Company — ERP POC</p>
+    <div class="shrink-0 border-t border-border p-3 text-[11px] text-text-muted">
+      <p>
+        Designed and built by
+        <a href="https://radinal.com" target="_blank" rel="noopener" class="font-medium text-primary hover:underline">Radinal</a>
+      </p>
       <p class="mt-0.5">All data is mock, stored locally.</p>
     </div>
   </aside>

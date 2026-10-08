@@ -56,7 +56,7 @@ const timelineRows = computed(() =>
 
   <BaseCard title="Gantt (Next 12 Weeks)">
     <div class="space-y-3">
-      <div v-for="row in timelineRows" :key="row.id" class="grid items-center gap-3" style="grid-template-columns: 260px 1fr">
+      <div v-for="row in timelineRows" :key="row.id" class="grid items-center gap-1.5 sm:gap-3 grid-cols-1 sm:grid-cols-[260px_1fr]">
         <p class="text-sm font-medium truncate">{{ row.label }}</p>
         <GanttBar :start-week="row.startWeek" :end-week="row.endWeek" :max-week="MAX_WEEK" :tone="row.tone as 'primary' | 'success' | 'warning' | 'danger'" :label="`W${row.startWeek} - W${row.endWeek}`" />
       </div>

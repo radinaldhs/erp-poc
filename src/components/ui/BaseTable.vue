@@ -163,7 +163,7 @@ function resetFilters(): void {
               :key="col.key"
               :style="col.width ? { width: col.width } : {}"
               :class="[
-                'px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-text-muted text-left select-none',
+                'px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-text-muted text-left select-none whitespace-nowrap',
                 col.align === 'right' && 'text-right',
                 col.align === 'center' && 'text-center',
                 col.sortable && 'cursor-pointer'
@@ -199,7 +199,7 @@ function resetFilters(): void {
               v-for="col in columns"
               :key="col.key"
               :class="[
-                'px-4 py-2.5',
+                'px-4 py-2.5 max-md:whitespace-nowrap',
                 col.align === 'right' && 'text-right',
                 col.align === 'center' && 'text-center'
               ]"

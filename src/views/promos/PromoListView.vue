@@ -77,7 +77,7 @@ function openDetail(row: Promo): void {
     :columns="columns"
     :rows="filtered"
     :page-size="10"
-    empty-message="No promos yet — start by submitting one."
+    empty-message="No promos yet. Start by submitting one."
     clickable
     row-key="id"
     @row-click="openDetail"

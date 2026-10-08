@@ -42,7 +42,7 @@ function openDetail(row: Promo): void {
 
 <template>
   <BasePageHeader
-    :title="`Approval Queue — ${auth.currentRole}`"
+    :title="`Approval Queue: ${auth.currentRole}`"
     subtitle="Promos awaiting action from the current role. Use the role switcher in the top bar to try a different tier."
   />
 
@@ -50,7 +50,7 @@ function openDetail(row: Promo): void {
     <div class="flex items-center gap-2 text-sm">
       <span class="text-text-muted">Viewing queue for:</span>
       <BaseBadge tone="primary">{{ auth.currentRole }}</BaseBadge>
-      <span class="text-text-muted">— {{ queue.length }} pending</span>
+      <span class="text-text-muted">({{ queue.length }} pending)</span>
     </div>
   </BaseCard>
 

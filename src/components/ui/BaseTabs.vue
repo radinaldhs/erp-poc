@@ -14,13 +14,13 @@ const emit = defineEmits<{ 'update:modelValue': [key: string] }>()
 </script>
 
 <template>
-  <div class="border-b border-border">
-    <nav class="flex gap-1 -mb-px">
+  <div class="border-b border-border min-w-0 max-w-full">
+    <nav class="flex gap-1 -mb-px overflow-x-auto scrollbar-thin">
       <button
         v-for="tab in tabs"
         :key="tab.key"
         :class="[
-          'px-4 py-2 text-sm border-b-2 inline-flex items-center gap-2 transition-colors',
+          'px-3 sm:px-4 py-2 text-sm border-b-2 inline-flex shrink-0 items-center gap-2 whitespace-nowrap transition-colors',
           tab.key === modelValue
             ? 'border-primary text-primary font-medium'
             : 'border-transparent text-text-muted hover:text-text'

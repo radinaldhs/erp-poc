@@ -17,7 +17,7 @@ defineProps<Props>()
       </div>
       <div class="min-w-0 flex-1">
         <p class="text-sm font-medium truncate">{{ entry.title }}</p>
-        <p class="text-xs text-text-muted truncate">{{ entry.description }} — {{ entry.actor }}</p>
+        <p class="text-xs text-text-muted truncate">{{ entry.description }} by {{ entry.actor }}</p>
         <p class="text-[11px] text-text-muted mt-0.5">{{ formatRelative(entry.timestamp) }}</p>
       </div>
     </div>

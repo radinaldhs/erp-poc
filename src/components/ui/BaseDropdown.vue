@@ -36,7 +36,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleOutside))
     <div
       v-if="open"
       :class="[
-        'absolute z-30 mt-2 card shadow-lg',
+        'absolute z-30 mt-2 card shadow-lg max-sm:fixed max-sm:inset-x-3 max-sm:top-14 max-sm:mt-0 max-sm:w-auto max-sm:max-h-[70vh] max-sm:overflow-y-auto',
         align === 'right' ? 'right-0' : 'left-0',
         width
       ]"
