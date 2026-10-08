@@ -197,12 +197,12 @@ function exportExcel(): void {
   </BasePageHeader>
 
   <BaseCard>
-    <div class="flex items-start gap-3">
-      <div class="h-10 w-10 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center">
+    <div class="flex flex-wrap sm:flex-nowrap items-start gap-3">
+      <div class="h-10 w-10 shrink-0 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center">
         <BarChart3 class="h-5 w-5" />
       </div>
-      <div class="flex-1">
-        <p class="text-sm font-semibold">Power BI Integration — ready to connect</p>
+      <div class="flex-1 min-w-0 basis-[calc(100%-3.25rem)] sm:basis-auto">
+        <p class="text-sm font-semibold">Power BI Integration: ready to connect</p>
         <p class="text-xs text-text-muted">
           This analytics layer is ready to expose its datasets to Power BI via a dedicated read-only endpoint.
           Once connected, the data you see here appears natively inside your Power BI workspace for deeper self-service
@@ -216,7 +216,7 @@ function exportExcel(): void {
   <BaseCard>
     <div class="flex flex-wrap items-end justify-between gap-4">
       <BaseTabs v-model="channel" :tabs="channelTabs" />
-      <div class="flex flex-wrap items-end gap-3">
+      <div class="flex flex-wrap items-end gap-3 min-w-0 w-full sm:w-auto">
         <BaseSelect
           v-if="channel === 'online'"
           v-model="marketplaceFilter"

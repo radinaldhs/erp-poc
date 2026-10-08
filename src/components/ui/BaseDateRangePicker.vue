@@ -55,8 +55,8 @@ watch([start, end], () => {
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-2">
-    <div class="flex items-center gap-1">
+  <div class="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
+    <div class="flex flex-wrap items-center gap-1">
       <button
         v-for="item in [
           { key: 'this_month', label: 'This Month' },
@@ -74,10 +74,10 @@ watch([start, end], () => {
         {{ item.label }}
       </button>
     </div>
-    <div class="flex items-center gap-2">
-      <input v-model="start" type="date" class="input-base !py-1 !text-xs w-36" />
+    <div class="flex items-center gap-2 w-full sm:w-auto">
+      <input v-model="start" type="date" class="input-base !py-1 !text-xs flex-1 min-w-0 sm:flex-none sm:w-36" />
       <span class="text-text-muted text-xs">to</span>
-      <input v-model="end" type="date" class="input-base !py-1 !text-xs w-36" />
+      <input v-model="end" type="date" class="input-base !py-1 !text-xs flex-1 min-w-0 sm:flex-none sm:w-36" />
     </div>
   </div>
 </template>

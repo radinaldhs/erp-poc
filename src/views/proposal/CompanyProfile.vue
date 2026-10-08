@@ -32,7 +32,7 @@ const values = [
 <template>
   <section class="space-y-8">
     <div class="text-center space-y-3">
-      <BaseBadge tone="primary">About Our Agency</BaseBadge>
+      <BaseBadge tone="primary">About Radinal</BaseBadge>
       <h1 class="text-4xl font-semibold tracking-tight">A Partner for Enterprise Delivery</h1>
       <p class="text-text-muted max-w-2xl mx-auto">
         We help ambitious organizations modernize critical business systems through pragmatic engineering,

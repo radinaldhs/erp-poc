@@ -193,7 +193,7 @@ function download(): void {
       />
     </BaseCard>
 
-    <BaseCard title="What happens after upload" subtitle="Data is immediately available to the office team — no manual cleanup required.">
+    <BaseCard title="What happens after upload" subtitle="Data is immediately available to the office team, with no manual cleanup required.">
       <ul class="list-disc ps-4 text-sm text-text-muted space-y-1.5">
         <li>Columns are auto-mapped to the canonical schema (date, sales rep, region, customer, product, quantity, unit price, total).</li>
         <li>Rows with missing or invalid values are flagged inline for review.</li>
@@ -204,7 +204,7 @@ function download(): void {
   </div>
 
   <div v-else-if="step === 'preview'" class="space-y-4">
-    <BaseCard title="File Preview" :subtitle="`${filename} — ${rawRows.length} rows detected`">
+    <BaseCard title="File Preview" :subtitle="`${filename}: ${rawRows.length} rows detected`">
       <template #header>
         <div class="flex items-center gap-2">
           <BaseButton variant="secondary" size="sm" @click="reset">Cancel</BaseButton>

@@ -23,10 +23,10 @@ const widthPct = ((props.endWeek - props.startWeek + 1) / props.maxWeek) * 100
 <template>
   <div class="relative h-6 rounded-md bg-surface border border-border">
     <div
-      :class="[toneMap[tone], 'absolute h-full rounded-md text-[11px] text-white flex items-center justify-center px-2 whitespace-nowrap']"
+      :class="[toneMap[tone], 'absolute h-full rounded-md text-[11px] text-white flex items-center justify-center px-2 whitespace-nowrap overflow-hidden']"
       :style="{ left: leftPct + '%', width: widthPct + '%' }"
     >
-      {{ label }}
+      <span class="truncate">{{ label }}</span>
     </div>
   </div>
 </template>

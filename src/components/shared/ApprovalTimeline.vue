@@ -31,13 +31,13 @@ const toneMap = {
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <span class="text-sm font-semibold">{{ entry.actor }}</span>
-        <span class="text-xs text-text-muted">— {{ entry.role }}</span>
+        <span class="text-xs text-text-muted">({{ entry.role }})</span>
       </div>
       <p class="text-xs text-text-muted capitalize">{{ entry.action }}
         <template v-if="entry.fromStatus || entry.toStatus">
-          : <span class="font-medium text-text">{{ entry.fromStatus ?? '—' }}</span>
+          : <span class="font-medium text-text">{{ entry.fromStatus ?? 'None' }}</span>
           <span class="mx-1">→</span>
-          <span class="font-medium text-text">{{ entry.toStatus ?? '—' }}</span>
+          <span class="font-medium text-text">{{ entry.toStatus ?? 'None' }}</span>
         </template>
       </p>
       <p v-if="entry.comment" class="text-sm mt-1">{{ entry.comment }}</p>

@@ -81,15 +81,15 @@ const weekTicks = Array.from({ length: MAX_WEEK }, (_, i) => i + 1)
 
     <BaseCard title="Gantt View">
       <div class="space-y-3">
-        <div class="grid items-center gap-2" style="grid-template-columns: 200px 1fr">
-          <div />
+        <div class="grid items-center gap-2 grid-cols-1 sm:grid-cols-[200px_1fr]">
+          <div class="hidden sm:block" />
           <div class="relative">
             <div class="flex justify-between text-[10px] text-text-muted">
               <span v-for="w in [1, 5, 10, 15, 20]" :key="w">W{{ w }}</span>
             </div>
           </div>
         </div>
-        <div v-for="phase in phases" :key="phase.name" class="grid items-center gap-3" style="grid-template-columns: 200px 1fr">
+        <div v-for="phase in phases" :key="phase.name" class="grid items-center gap-1.5 sm:gap-3 grid-cols-1 sm:grid-cols-[200px_1fr]">
           <div>
             <p class="text-sm font-semibold">{{ phase.name }}</p>
             <p class="text-[11px] text-text-muted">W{{ phase.startWeek }} - W{{ phase.endWeek }}</p>

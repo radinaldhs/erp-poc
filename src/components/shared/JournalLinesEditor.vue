@@ -45,8 +45,8 @@ const totalCredit = computed(() => lines.value.reduce((s, l) => s + l.credit, 0)
 </script>
 
 <template>
-  <div class="card overflow-hidden">
-    <table class="w-full text-sm">
+  <div class="card overflow-x-auto scrollbar-thin">
+    <table class="w-full min-w-[480px] text-sm">
       <thead class="bg-surface/60 text-text-muted text-xs uppercase tracking-wide">
         <tr>
           <th class="px-3 py-2 text-left">Account</th>

@@ -15,7 +15,7 @@ defineProps<Props>()
 </script>
 
 <template>
-  <ol class="flex items-center gap-2">
+  <ol class="flex flex-wrap items-center gap-2">
     <li
       v-for="(step, index) in steps"
       :key="step.key"

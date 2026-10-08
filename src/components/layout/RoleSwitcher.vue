@@ -16,14 +16,17 @@ function setRole(role: UserRole): void {
 <template>
   <BaseDropdown width="w-56">
     <template #trigger>
-      <button class="hidden md:inline-flex items-center gap-2 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-text hover:bg-border/40">
-        <UserCog class="h-3.5 w-3.5" />
-        <span class="text-text-muted">Role:</span>
-        <span class="font-medium">{{ auth.currentRole }}</span>
+      <button
+        class="inline-flex items-center gap-2 rounded-md border border-border bg-surface h-9 w-9 justify-center md:h-auto md:w-auto md:px-2.5 md:py-1.5 text-xs text-text hover:bg-border/40"
+        :aria-label="`Switch role (current: ${auth.currentRole})`"
+      >
+        <UserCog class="h-4 w-4 md:h-3.5 md:w-3.5" />
+        <span class="hidden md:inline text-text-muted">Role:</span>
+        <span class="hidden md:inline font-medium">{{ auth.currentRole }}</span>
       </button>
     </template>
     <div class="p-1">
-      <p class="px-3 py-2 text-[11px] uppercase tracking-wide text-text-muted">Switch role (demo)</p>
+      <p class="px-3 py-2 text-[11px] uppercase tracking-wide text-text-muted">Switch role (demo): {{ auth.currentRole }}</p>
       <button
         v-for="role in roles"
         :key="role"

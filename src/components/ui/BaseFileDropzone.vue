@@ -116,7 +116,7 @@ function emitFiles(files: File[]): void {
   >
     <UploadCloud class="h-10 w-10 text-primary mx-auto mb-3" />
     <p class="text-sm font-medium">{{ hint }}</p>
-    <p class="text-xs text-text-muted mt-1">Accepted: {{ accept }} — up to {{ maxSizeMb }}MB</p>
+    <p class="text-xs text-text-muted mt-1">Accepted: {{ accept }}, up to {{ maxSizeMb }}MB</p>
     <input ref="input" type="file" :accept="accept" :multiple="multiple" class="hidden" @change="onChange" />
   </div>
 </template>

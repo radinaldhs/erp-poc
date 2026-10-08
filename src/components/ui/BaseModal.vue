@@ -35,7 +35,7 @@ const sizeClass: Record<NonNullable<Props['size']>, string> = {
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center px-3 sm:px-4">
       <div class="absolute inset-0 bg-black/50" @click="emit('close')" />
       <div :class="['relative w-full card shadow-xl', sizeClass[size]]">
         <div v-if="title || $slots.header" class="flex items-center justify-between px-5 py-3 border-b border-border">
@@ -44,7 +44,7 @@ const sizeClass: Record<NonNullable<Props['size']>, string> = {
             <X class="h-4 w-4" />
           </button>
         </div>
-        <div class="p-5 max-h-[75vh] overflow-auto scrollbar-thin">
+        <div class="p-4 sm:p-5 max-h-[calc(100dvh-10rem)] sm:max-h-[75vh] overflow-auto scrollbar-thin">
           <slot />
         </div>
         <div v-if="$slots.footer" class="px-5 py-3 border-t border-border bg-surface">
